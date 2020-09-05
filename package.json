@@ -1,0 +1,59 @@
+{
+  "name": "interval-perception-trainer",
+  "description": "interval perception trainer",
+  "version": "0.1.0",
+  "private": false,
+  "license": {
+    "type": "CC BY-NC-SA",
+    "url": "https://creativecommons.org/licenses/by-nc-sa/4.0/"
+  },
+  "scripts": {
+    "start": "vue-cli-service electron:serve",
+    "build": "vue-cli-service electron:build",
+    "test:unit": "vue-cli-service test:unit",
+    "lint": "vue-cli-service lint",
+    "electron:build": "vue-cli-service electron:build",
+    "electron:serve": "vue-cli-service electron:serve",
+    "postinstall": "electron-builder install-app-deps",
+    "postuninstall": "electron-builder install-app-deps"
+  },
+  "main": "background.js",
+  "author": "Andrey Sharapov <an.sh.1@yandex.ru> (https://github.com/an-sh)",
+  "dependencies": {
+    "bulma": "^0.9.0",
+    "core-js": "^3.6.5",
+    "electron": "^9.3.0",
+    "rxjs": "^6.6.2",
+    "typedi": "^0.8.0",
+    "vue": "^3.0.0-rc.10",
+    "vue-router": "^4.0.0-beta.9"
+  },
+  "devDependencies": {
+    "@types/jest": "^24.0.19",
+    "@vue/babel-plugin-jsx": "^1.0.0-rc.2",
+    "@vue/cli-plugin-babel": "^4.5.4",
+    "@vue/cli-plugin-typescript": "^4.5.4",
+    "@vue/cli-plugin-unit-jest": "^4.5.4",
+    "@vue/cli-service": "^4.5.4",
+    "@vue/compiler-sfc": "^3.0.0-rc.10",
+    "@vue/test-utils": "^2.0.0-beta.3",
+    "electron-devtools-installer": "^3.1.0",
+    "node-sass": "^4.14.1",
+    "reflect-metadata": "^0.1.13",
+    "sass-loader": "^10.0.2",
+    "tslint": "^6.1.3",
+    "typescript": "~3.9.3",
+    "typestyle": "^2.1.0",
+    "vue-cli-plugin-electron-builder": "~2.0.0-rc.4",
+    "vue-jest": "^5.0.0-alpha.3"
+  },
+  "browserslist": [
+    "chrome 85"
+  ],
+  "jest": {
+    "preset": "@vue/cli-plugin-unit-jest/presets/typescript-and-babel",
+    "transform": {
+      "^.+\\.vue$": "vue-jest"
+    }
+  }
+}
