@@ -1,5 +1,9 @@
 # interval-perception-trainer
 
+![Main](screenshots/main.png?raw=true "Main")
+![Player](screenshots/player.png?raw=true "Player")
+![Stats](screenshots/stats.png?raw=true "Stats")
+
 ## Installation
 
 - Download this repository
