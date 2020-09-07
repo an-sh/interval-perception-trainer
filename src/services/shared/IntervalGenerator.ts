@@ -15,8 +15,8 @@ class IntervalGenerator {
     return Math.floor(Math.random() * (maximum - minimum + 1)) + minimum;
   }
 
-  getDiadInterval(avalaibleIds: number[]): Interval {
-    const root = this.getRandomNumber(28, 52);
+  getDiadInterval(avalaibleIds: number[], fixedRoot?: number): Interval {
+    const root = fixedRoot ?? this.getRandomNumber(28, 52);
     const idx = this.getRandomNumber(0, avalaibleIds.length - 1);
     const interval = avalaibleIds[idx];
     const note = root + interval;

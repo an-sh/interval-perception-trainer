@@ -27,8 +27,8 @@ export const Player = defineComponent({
     const state = Container.get(PlayerStateToken);
 
     const { showResult, selectedIntervalId, currentInterval, level } = state;
-    const { playRandom, repeat, repeatPerfect, makeChoice, getIntervalName, getIntervalNoteNames, exit } = getBoundMethods(
-      state, 'playRandom', 'repeat', 'repeatPerfect', 'makeChoice', 'getIntervalName', 'getIntervalNoteNames', 'exit',
+    const { playRandom, repeat, repeatPerfect, makeChoice, getIntervalName, getIntervalNoteNames,  playFromRoot, exit } = getBoundMethods(
+      state, 'playRandom', 'repeat', 'repeatPerfect', 'makeChoice', 'getIntervalName', 'getIntervalNoteNames', 'playFromRoot', 'exit',
     );
 
     const isCorrect = computed(() => currentInterval?.value?.interval === selectedIntervalId?.value);
@@ -47,7 +47,7 @@ export const Player = defineComponent({
             } else if (!isCorrect.value && id === currentInterval.value?.interval) {
               classString += ' is-primary';
             }
-            return <div class={css.choiceButton}><button class={classString} disabled>{name}</button></div>;
+            return <div class={css.choiceButton}><button class={classString} onClick={() => playFromRoot(id)}>{name}</button></div>;
           } else {
             return <div class={css.choiceButton}><button class='button is-small' onClick={() => makeChoice(id)}>{name}</button></div>;
           }
