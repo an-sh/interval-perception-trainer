@@ -42,7 +42,12 @@ class LevelsSelector {
   }
 
   public getTypeName(levelType: LevelType) {
-    return levelType.charAt(0).toUpperCase() + levelType.slice(1);
+    switch (levelType) {
+      case 'simultaneous':
+        return 'Harmonic';
+      case 'sequential':
+        return 'Melodic';
+    }
   }
 
 }
