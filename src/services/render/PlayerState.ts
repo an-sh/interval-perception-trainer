@@ -45,6 +45,10 @@ class PlayerState {
     this.pipelinesSubscription = null;
   }
 
+  isMatchingChoice() {
+    return this.currentInterval.value?.interval === this.selectedIntervalId.value;
+  }
+
   playRandom() {
     this.nextInterval$.next(true);
   }
@@ -53,7 +57,7 @@ class PlayerState {
     const currentInterval = this.currentInterval.value;
     if (currentInterval) {
       const interval = this.generator.getDiadInterval([id], currentInterval.root);
-      const freqs =  this.getFreqs(interval);
+      const freqs = this.getFreqs(interval);
       const duration = 2;
       const pause = 0;
       const input: PlayerInput = { freqs, duration, pause, type: 'simultaneous' };

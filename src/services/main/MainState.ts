@@ -34,20 +34,20 @@ class MainState {
   }
 
   private init() {
-    const getTablePipeline$ = combineLatest(
+    const getTablePipeline$ = combineLatest([
       this.window$,
       this.comm.listen(tableMsgs.request).pipe(
         switchMap(() => this.loader.getTable()),
-      ),
+      )],
     ).pipe(
       tap(([window, table]) => this.comm.send(window, tableMsgs.response, table))
     );
 
-    const getLevelsPipeline$ = combineLatest(
+    const getLevelsPipeline$ = combineLatest([
       this.window$,
       this.comm.listen(levelMsgs.request).pipe(
         switchMap(() => this.loader.getLevels()),
-      ),
+      )],
     ).pipe(
       tap(([window, table]) => this.comm.send(window, levelMsgs.response, table))
     );

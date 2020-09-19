@@ -1,4 +1,4 @@
-import { getBoundMethods } from '@/lib/bind-utils';
+import { getBoundMethods } from '@/lib/utils';
 import { PlayerStateToken } from '@/services/render/PlayerState';
 import { Container } from 'typedi';
 import { classes, stylesheet } from 'typestyle';
@@ -27,17 +27,18 @@ export const Player = defineComponent({
     const state = Container.get(PlayerStateToken);
 
     const { showResult, selectedIntervalId, currentInterval, level } = state;
-    const { playRandom, repeat, repeatPerfect, makeChoice, getIntervalName, getIntervalNoteNames,  playFromRoot, exit } = getBoundMethods(
-      state, 'playRandom', 'repeat', 'repeatPerfect', 'makeChoice', 'getIntervalName', 'getIntervalNoteNames', 'playFromRoot', 'exit',
+    const actions = getBoundMethods(
+      state,
+      'playRandom', 'repeat', 'repeatPerfect', 'makeChoice', 'getIntervalName', 'getIntervalNoteNames', 'playFromRoot', 'isMatchingChoice', 'exit',
     );
 
-    const isCorrect = computed(() => currentInterval?.value?.interval === selectedIntervalId?.value);
+    const isCorrect = computed(actions.isMatchingChoice);
 
     return () => {
       let intervalSelect = <div></div>;
       if (currentInterval.value && level.value) {
         intervalSelect = level.value.intervals.map((id) => {
-          const name = getIntervalName(id);
+          const name = actions.getIntervalName(id);
           if (showResult.value) {
             let classString = 'button is-small';
             if (isCorrect.value && id === selectedIntervalId.value) {
@@ -47,9 +48,9 @@ export const Player = defineComponent({
             } else if (!isCorrect.value && id === currentInterval.value?.interval) {
               classString += ' is-primary';
             }
-            return <div class={css.choiceButton}><button class={classString} onClick={() => playFromRoot(id)}>{name}</button></div>;
+            return <div class={css.choiceButton}><button class={classString} onClick={() => actions.playFromRoot(id)}>{name}</button></div>;
           } else {
-            return <div class={css.choiceButton}><button class='button is-small' onClick={() => makeChoice(id)}>{name}</button></div>;
+            return <div class={css.choiceButton}><button class='button is-small' onClick={() => actions.makeChoice(id)}>{name}</button></div>;
           }
         });
       }
@@ -57,10 +58,10 @@ export const Player = defineComponent({
       if (level.value) {
         controlls = (
           <div class={classes(css.controls)}>
-            {showResult.value || !currentInterval.value ? <button class={classes(css.actionButton, 'button')} onClick={exit}>Exit</button> : ''}
-            {currentInterval.value ? <button class={classes(css.actionButton, 'button')} onClick={repeat}>Repeat TET</button> : ''}
-            {currentInterval.value ? <button class={classes(css.actionButton, 'button')} onClick={repeatPerfect}>Play Pure</button> : ''}
-            {showResult.value || !currentInterval.value ? <button class={classes(css.actionButton, 'button is-primary')} onClick={playRandom}>Next</button> : ''}
+            {showResult.value || !currentInterval.value ? <button class={classes(css.actionButton, 'button')} onClick={actions.exit}>Exit</button> : ''}
+            {currentInterval.value ? <button class={classes(css.actionButton, 'button')} onClick={actions.repeat}>Repeat TET</button> : ''}
+            {currentInterval.value ? <button class={classes(css.actionButton, 'button')} onClick={actions.repeatPerfect}>Play Pure</button> : ''}
+            {showResult.value || !currentInterval.value ? <button class={classes(css.actionButton, 'button is-primary')} onClick={actions.playRandom}>Next</button> : ''}
           </div>
         );
       }
@@ -71,7 +72,7 @@ export const Player = defineComponent({
           {intervalSelect}
           {
             showResult.value && currentInterval.value ?
-              <div class={classes(css.noteNames, 'is-size-7')}>Interval: {getIntervalNoteNames(currentInterval.value)}</div> :
+              <div class={classes(css.noteNames, 'is-size-7')}>Interval: {actions.getIntervalNoteNames(currentInterval.value)}</div> :
               ''
           }
         </div>

@@ -19,7 +19,7 @@ class LevelsSelector {
     @Inject(CommRenderToken) comm: ICommRender,
   ) {
     this.levels$ = comm.listen<Levels>(levelMsgs.response).pipe(shareReplay(1));
-    this.currentLevel$ = combineLatest(this.levelId$, this.levelType$, this.levels$).pipe(
+    this.currentLevel$ = combineLatest([this.levelId$, this.levelType$, this.levels$]).pipe(
       map(([levelId, type, levels]) => {
         const lvl = levels.diads.find(l => l.id === levelId) || levels.diads[0];
         return { ...lvl, type };
