@@ -9,11 +9,6 @@ import { LevelType } from '@/models/Levels';
 export const AudioPlayerToken = new Token<AudioPlayer>();
 export type IAudioPlayer = AudioPlayer;
 
-interface PlaySampleData {
-  sample: SampleData,
-  rate: number,
-};
-
 export interface PlayerInput {
   freqs: number[],
   type: LevelType,
@@ -21,15 +16,30 @@ export interface PlayerInput {
   pause: number,
 }
 
+interface PlayerItem extends SampleData {
+  rate: number,
+};
+
 interface PlayerWebAudioState {
-  audioCtx: AudioContext,
   sources: AudioBufferSourceNode[],
+  nodes: AudioNode[],
+}
+
+interface BuffersCache {
+  [freq: number]: Observable<BuffersCacheItem>;
+}
+
+interface BuffersCacheItem {
+  freq: number;
+  decoded: AudioBuffer,
 }
 
 @Service(AudioPlayerToken)
 class AudioPlayer {
   public playerInput$: Subject<PlayerInput> = new Subject();
 
+  private buffersCache: BuffersCache = {};
+  private audioCtx = new AudioContext();
   private playerPipeline$: Observable<PlayerWebAudioState>;
   private pipelinesSubscription: Subscription | null = null;
   private fadeCurve = [1, 0.9, 0.7, 0.3, 0];
@@ -42,12 +52,11 @@ class AudioPlayer {
       withLatestFrom(comm.listen<SampleTable>(tableMsgs.response).pipe(shareReplay(1))),
       switchMap(([data, table]) => this.play(table, data.freqs, data.type, data.duration, data.pause)),
       scan(
-        (oldState, webAudioState) => {
-          if (oldState) {
-            this.stop(oldState.sources);
-            oldState.audioCtx.close();
+        (prevState, nextState) => {
+          if (prevState) {
+            this.stop(prevState);
           }
-          return webAudioState;
+          return nextState;
         },
       ),
     );
@@ -56,6 +65,8 @@ class AudioPlayer {
   }
 
   destroy() {
+    this.buffersCache = {};
+    this.audioCtx.close();
     this.pipelinesSubscription?.unsubscribe();
     this.pipelinesSubscription = null;
   }
@@ -64,15 +75,18 @@ class AudioPlayer {
     const data = freqs.map((freq) => {
       const sample = this.getClosestSample(table, freq);
       const rate = this.getPlayRatio(freq, sample.freq);
-      return { sample, rate };
+      return { ...sample, rate };
     });
-    // console.log(data);
     return this.makeWebAudioPipeline(data, type, duration, pause);
   }
 
-  private stop(sources: AudioBufferSourceNode[]) {
-    for (const source of sources) {
+  private stop(state: PlayerWebAudioState) {
+    for (const source of state.sources) {
       source.stop(0);
+      source.disconnect();
+    }
+    for (const node of state.nodes) {
+      node.disconnect();
     }
   }
 
@@ -93,25 +107,32 @@ class AudioPlayer {
     return targetFreq / sampleFreq;
   }
 
-  private makeWebAudioPipeline(data: PlaySampleData[], type: LevelType, duration: number, pause: number): Observable<PlayerWebAudioState> {
-    const audioCtx = new AudioContext();
+  private makeWebAudioPipeline(data: PlayerItem[], type: LevelType, duration: number, pause: number): Observable<PlayerWebAudioState> {
     return from(data).pipe(
       concatMap((item) => {
-        return from(audioCtx.decodeAudioData(item.sample.data.buffer.slice(0))).pipe(
-          map(decoded => ({ decoded, item })),
+        const rateMapper = (cacheItem: BuffersCacheItem) => ({ ...cacheItem, rate: item.rate })
+        if (this.buffersCache[item.freq]) {
+          return this.buffersCache[item.freq].pipe(map(rateMapper));
+        }
+        const newCacheItem = from(this.audioCtx.decodeAudioData(item.data.buffer.slice(0))).pipe(
+          map(decoded => ({ decoded, freq: item.freq })),
+          shareReplay(1),
         );
+        this.buffersCache[item.freq] = newCacheItem;
+        return newCacheItem.pipe(map(rateMapper));
       }),
       toArray(),
       map((decodedData) => {
-        let start = audioCtx.currentTime;
+        let start = this.audioCtx.currentTime;
         const sources: AudioBufferSourceNode[] = [];
-        for (const { decoded, item } of decodedData) {
-          const source = audioCtx.createBufferSource();
-          const gainNode = audioCtx.createGain();
+        const nodes: AudioNode[] = [];
+        for (const { decoded, rate } of decodedData) {
+          const source = this.audioCtx.createBufferSource();
+          const gainNode = this.audioCtx.createGain();
           source.buffer = decoded;
           source.connect(gainNode);
-          gainNode.connect(audioCtx.destination);
-          source.playbackRate.value = item.rate;
+          gainNode.connect(this.audioCtx.destination);
+          source.playbackRate.value = rate;
           gainNode.gain.value = 1;
           const startFade = start + Math.max(this.fadeTime, duration - this.fadeTime);
           gainNode.gain.setValueCurveAtTime(
@@ -122,10 +143,11 @@ class AudioPlayer {
           source.start(start);
           source.stop(start + duration);
           sources.push(source);
+          nodes.push(gainNode);
           const delta = (duration + pause);
           start += (type === 'simultaneous' ? 0 : delta);
         }
-        return { audioCtx, sources };
+        return { sources, nodes };
       }),
     );
   }
