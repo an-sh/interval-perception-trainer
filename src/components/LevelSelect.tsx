@@ -1,6 +1,5 @@
 import { useObservable } from '@/lib/rx-vue';
 import { PlaybackType } from '@/models/Levels';
-import { InstrumentType } from '@/models/SampleTable';
 import router, { routeNames } from '@/router';
 import { LevelsSelectorToken } from '@/services/render/LevelsSelector';
 import { Container } from 'typedi';

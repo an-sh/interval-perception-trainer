@@ -1,6 +1,6 @@
 import { tableMsgs } from '@/models/events';
 import { InstrumentType, SampleData, SampleTable } from '@/models/SampleTable';
-import { from, Observable, Subject, Subscription, of } from 'rxjs';
+import { from, Observable, Subject, Subscription } from 'rxjs';
 import { map, scan, shareReplay, switchMap, toArray, withLatestFrom, concatMap } from 'rxjs/operators';
 import { Inject, Service, Token } from 'typedi';
 import { CommRenderToken, ICommRender } from './CommRender';
@@ -17,14 +17,14 @@ export interface PlayerInput {
   pause: number,
 }
 
-interface SamplerItem extends SampleData {
-  rate: number,
-};
-
 interface PlayerWebAudioState {
   sources: AudioScheduledSourceNode[],
   nodes: AudioNode[],
 }
+
+interface SamplerItem extends SampleData {
+  rate: number,
+};
 
 interface BuffersCache {
   [freq: number]: Observable<BuffersCacheItem>;
@@ -33,6 +33,10 @@ interface BuffersCache {
 interface BuffersCacheItem {
   freq: number;
   decoded: AudioBuffer,
+}
+
+interface DecodedSamplerItem extends BuffersCacheItem {
+  rate: number,
 }
 
 @Service(AudioPlayerToken)
@@ -115,25 +119,27 @@ class AudioPlayer {
 
   private makeSamplerAudioPipeline(data: SamplerItem[], input: PlayerInput): Observable<PlayerWebAudioState> {
     return from(data).pipe(
-      concatMap(this.decoderCacher.bind(this)),
+      concatMap(item => this.decoderCacher(item)),
       toArray(),
-      map((decodedData) => {
-        let start = this.audioCtx.currentTime;
-        const sources: AudioScheduledSourceNode[] = [];
-        const nodes: AudioNode[] = [];
-        for (const { decoded, rate } of decodedData) {
-          const source = this.audioCtx.createBufferSource();
-          sources.push(source);
-          source.buffer = decoded;
-          source.playbackRate.value = rate;
-
-          const gainNode = this.addGainFadeNode(source, input, start);
-          nodes.push(gainNode);
-          start = this.setSourceTimings(source, input, start);
-        }
-        return { sources, nodes };
-      }),
+      map(decodedData => this.setSamplerNodes(decodedData, input)),
     );
+  }
+
+  private setSamplerNodes(decodedData: DecodedSamplerItem[], input: PlayerInput) {
+    let start = this.audioCtx.currentTime;
+    const sources: AudioScheduledSourceNode[] = [];
+    const nodes: AudioNode[] = [];
+    for (const { decoded, rate } of decodedData) {
+      const source = this.audioCtx.createBufferSource();
+      sources.push(source);
+      source.buffer = decoded;
+      source.playbackRate.value = rate;
+
+      const gainNode = this.addGainFadeNode(source, input, start);
+      nodes.push(gainNode);
+      start = this.setSourceTimings(source, input, start);
+    }
+    return { sources, nodes };
   }
 
   private decoderCacher(item: SamplerItem) {
