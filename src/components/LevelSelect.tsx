@@ -1,5 +1,6 @@
 import { useObservable } from '@/lib/rx-vue';
-import { LevelType } from '@/models/Levels';
+import { PlaybackType } from '@/models/Levels';
+import { InstrumentType } from '@/models/SampleTable';
 import router, { routeNames } from '@/router';
 import { LevelsSelectorToken } from '@/services/render/LevelsSelector';
 import { Container } from 'typedi';
@@ -19,16 +20,17 @@ export const LevelSelect = defineComponent({
   setup() {
     const levelsSelector = Container.get(LevelsSelectorToken);
     const levels = useObservable(levelsSelector.levels$);
-    const selectedType = useObservable(levelsSelector.levelType$);
-    const levelTypes = levelsSelector.getAllLevelTypes();
+    const playbackType = useObservable(levelsSelector.playbackType$);
+
+    const playbackTypes = levelsSelector.getAllPlaybackTypes();
 
     function selectLevel(id: number) {
       levelsSelector.selectLevel(id);
       router.push({ name: routeNames.training });
     }
 
-    function selectLevelType(levelType: LevelType) {
-      levelsSelector.selectType(levelType);
+    function selectPlaybackType(type: PlaybackType) {
+      levelsSelector.selectPlaybackType(type);
     }
 
     return () => {
@@ -42,16 +44,16 @@ export const LevelSelect = defineComponent({
             );
           }) :
           <div></div>;
-      const levelTypeSeletor = (
+      const playbackTypeSeletor = (
         <div class='buttons has-addons'>
-          {levelTypes.map(lvl => <button class={classes('button', lvl === selectedType.value ? 'is-info' : '')} onClick={() => selectLevelType(lvl)}>{levelsSelector.getTypeName(lvl)}</button>)}
+          {playbackTypes.map(lvl => <button class={classes('button', lvl === playbackType.value ? 'is-info' : '')} onClick={() => selectPlaybackType(lvl)}>{levelsSelector.getPlaybackName(lvl)}</button>)}
         </div>
-      )
-      if (selectedType) {
+      );
+      if (playbackType) {
         return (
           <div class='container is-fluid'>
             <p class={classes(css.title, 'subtitle', 'is-5')}>Select Training</p>
-            {levelTypeSeletor}
+            {playbackTypeSeletor}
             {levelsMenu}
           </div>
         );

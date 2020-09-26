@@ -1,27 +1,28 @@
 import { tableMsgs } from '@/models/events';
-import { SampleData, SampleTable } from '@/models/SampleTable';
-import { from, Observable, Subject, Subscription } from 'rxjs';
+import { InstrumentType, SampleData, SampleTable } from '@/models/SampleTable';
+import { from, Observable, Subject, Subscription, of } from 'rxjs';
 import { map, scan, shareReplay, switchMap, toArray, withLatestFrom, concatMap } from 'rxjs/operators';
 import { Inject, Service, Token } from 'typedi';
 import { CommRenderToken, ICommRender } from './CommRender';
-import { LevelType } from '@/models/Levels';
+import { PlaybackType } from '@/models/Levels';
 
 export const AudioPlayerToken = new Token<AudioPlayer>();
 export type IAudioPlayer = AudioPlayer;
 
 export interface PlayerInput {
   freqs: number[],
-  type: LevelType,
+  instrumentType: InstrumentType,
+  playbackType: PlaybackType,
   duration: number,
   pause: number,
 }
 
-interface PlayerItem extends SampleData {
+interface SamplerItem extends SampleData {
   rate: number,
 };
 
 interface PlayerWebAudioState {
-  sources: AudioBufferSourceNode[],
+  sources: AudioScheduledSourceNode[],
   nodes: AudioNode[],
 }
 
@@ -50,7 +51,7 @@ class AudioPlayer {
   ) {
     this.playerPipeline$ = this.playerInput$.pipe(
       withLatestFrom(comm.listen<SampleTable>(tableMsgs.response).pipe(shareReplay(1))),
-      switchMap(([data, table]) => this.play(table, data.freqs, data.type, data.duration, data.pause)),
+      switchMap(([input, pianoTable]) => this.play(pianoTable, input)),
       scan(
         (prevState, nextState) => {
           if (prevState) {
@@ -71,13 +72,18 @@ class AudioPlayer {
     this.pipelinesSubscription = null;
   }
 
-  private play(table: SampleTable, freqs: number[], type: LevelType, duration: number, pause: number) {
-    const data = freqs.map((freq) => {
-      const sample = this.getClosestSample(table, freq);
-      const rate = this.getPlayRatio(freq, sample.freq);
-      return { ...sample, rate };
-    });
-    return this.makeWebAudioPipeline(data, type, duration, pause);
+  private play(table: SampleTable, input: PlayerInput) {
+    const { instrumentType } = input;
+    switch (instrumentType) {
+      case 'piano': {
+        const data = input.freqs.map((freq) => {
+          const sample = this.getClosestSample(table, freq);
+          const rate = this.getPlayRatio(freq, sample.freq);
+          return { ...sample, rate };
+        });
+        return this.makeSamplerAudioPipeline(data, input);
+      }
+    }
   }
 
   private stop(state: PlayerWebAudioState) {
@@ -107,48 +113,64 @@ class AudioPlayer {
     return targetFreq / sampleFreq;
   }
 
-  private makeWebAudioPipeline(data: PlayerItem[], type: LevelType, duration: number, pause: number): Observable<PlayerWebAudioState> {
+  private makeSamplerAudioPipeline(data: SamplerItem[], input: PlayerInput): Observable<PlayerWebAudioState> {
     return from(data).pipe(
-      concatMap((item) => {
-        const rateMapper = (cacheItem: BuffersCacheItem) => ({ ...cacheItem, rate: item.rate })
-        if (this.buffersCache[item.freq]) {
-          return this.buffersCache[item.freq].pipe(map(rateMapper));
-        }
-        const newCacheItem = from(this.audioCtx.decodeAudioData(item.data.buffer.slice(0))).pipe(
-          map(decoded => ({ decoded, freq: item.freq })),
-          shareReplay(1),
-        );
-        this.buffersCache[item.freq] = newCacheItem;
-        return newCacheItem.pipe(map(rateMapper));
-      }),
+      concatMap(this.decoderCacher.bind(this)),
       toArray(),
       map((decodedData) => {
         let start = this.audioCtx.currentTime;
-        const sources: AudioBufferSourceNode[] = [];
+        const sources: AudioScheduledSourceNode[] = [];
         const nodes: AudioNode[] = [];
         for (const { decoded, rate } of decodedData) {
           const source = this.audioCtx.createBufferSource();
-          const gainNode = this.audioCtx.createGain();
-          source.buffer = decoded;
-          source.connect(gainNode);
-          gainNode.connect(this.audioCtx.destination);
-          source.playbackRate.value = rate;
-          gainNode.gain.value = 1;
-          const startFade = start + Math.max(this.fadeTime, duration - this.fadeTime);
-          gainNode.gain.setValueCurveAtTime(
-            this.fadeCurve,
-            startFade,
-            this.fadeTime,
-          );
-          source.start(start);
-          source.stop(start + duration);
           sources.push(source);
+          source.buffer = decoded;
+          source.playbackRate.value = rate;
+
+          const gainNode = this.addGainFadeNode(source, input, start);
           nodes.push(gainNode);
-          const delta = (duration + pause);
-          start += (type === 'simultaneous' ? 0 : delta);
+          start = this.setSourceTimings(source, input, start);
         }
         return { sources, nodes };
       }),
     );
+  }
+
+  private decoderCacher(item: SamplerItem) {
+    const rateMapper = (cacheItem: BuffersCacheItem) => ({ ...cacheItem, rate: item.rate })
+    if (this.buffersCache[item.freq]) {
+      return this.buffersCache[item.freq].pipe(map(rateMapper));
+    }
+    const newCacheItem = from(this.audioCtx.decodeAudioData(item.data.buffer.slice(0))).pipe(
+      map(decoded => ({ decoded, freq: item.freq })),
+      shareReplay(1),
+    );
+    this.buffersCache[item.freq] = newCacheItem;
+    return newCacheItem.pipe(map(rateMapper));
+  }
+
+  private addGainFadeNode(source: AudioNode, input: PlayerInput, start: number, volume = 1) {
+    const { duration } = input;
+    const gainNode = this.audioCtx.createGain();
+    source.connect(gainNode);
+    gainNode.connect(this.audioCtx.destination);
+    gainNode.gain.value = volume;
+    const startFade = start + Math.max(this.fadeTime, duration - this.fadeTime);
+    const fadeValues = this.fadeCurve.map(val => val * volume);
+    gainNode.gain.setValueCurveAtTime(
+      fadeValues,
+      startFade,
+      this.fadeTime,
+    );
+    return gainNode;
+  }
+
+  private setSourceTimings(source: AudioBufferSourceNode | OscillatorNode, input: PlayerInput, start: number) {
+    const { duration, pause, playbackType } = input;
+    source.start(start);
+    source.stop(start + duration);
+    const delta = (duration + pause);
+    start += (playbackType === 'simultaneous' ? 0 : delta);
+    return start;
   }
 }

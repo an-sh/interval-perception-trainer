@@ -1,5 +1,6 @@
+import { InstrumentType } from './SampleTable';
 
-export type LevelType = 'simultaneous' | 'sequential';
+export type PlaybackType = 'simultaneous' | 'sequential';
 
 export interface Level {
   id: number,
@@ -10,7 +11,8 @@ export interface Level {
 }
 
 export interface PlayerLevel extends Level {
-  type: LevelType;
+  instrumentType: InstrumentType,
+  playbackType: PlaybackType;
 }
 
 export interface Levels {

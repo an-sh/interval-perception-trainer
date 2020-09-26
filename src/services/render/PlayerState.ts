@@ -1,5 +1,5 @@
 import { Interval } from '@/models/Interval';
-import { PlayerLevel } from '@/models/Levels';
+import { PlaybackType, PlayerLevel } from '@/models/Levels';
 import router, { routeNames } from '@/router';
 import { merge, Subject, Subscription } from 'rxjs';
 import { tap, withLatestFrom } from 'rxjs/operators';
@@ -55,13 +55,13 @@ class PlayerState {
 
   playFromRoot(id: number) {
     const currentInterval = this.currentInterval.value;
-    if (currentInterval) {
+    const level = this.level.value;
+    if (currentInterval && level) {
       const interval = this.generator.getDiadInterval([id], currentInterval.root);
-      const freqs = this.getFreqs(interval);
-      const duration = 2;
-      const pause = 0;
-      const input: PlayerInput = { freqs, duration, pause, type: 'simultaneous' };
-      this.playInput(input);
+      const input = this.makeIntervalPayload(interval, false);
+      if (input) {
+        this.playInput(input);
+      }
     }
   }
 
@@ -126,14 +126,42 @@ class PlayerState {
 
   private getPlayerInput(isPerfect: boolean): PlayerInput | null {
     const interval = this.currentInterval?.value;
-    const levelType = this.level.value?.type;
-    if (interval != null && levelType != null) {
-      const freqs = isPerfect ? this.getPerfectFreq(interval) : this.getFreqs(interval);
-      const duration = this.level.value?.type === 'sequential' ? 1.25 : 2;
-      const pause = this.level.value?.type === 'sequential' ? 0.5 : 0;
-      return { freqs, duration, pause, type: levelType };
+    if (interval != null) {
+      return this.makeIntervalPayload(interval, isPerfect);
     }
     return null;
+  }
+
+  private makeIntervalPayload(interval: Interval, isPerfect: boolean) {
+    const level = this.level.value;
+    if (interval != null && level != null) {
+      const { instrumentType, playbackType } = level;
+      const freqs = isPerfect ? this.getPerfectFreq(interval) : this.getFreqs(interval);
+      const duration = this.getDuration(playbackType);
+      const pause = this.getPause(playbackType);
+      return { freqs, duration, pause, instrumentType, playbackType };
+    }
+    return null;
+
+  }
+
+  private getDuration(playbackType: PlaybackType) {
+    switch (playbackType) {
+      case 'sequential':
+        return 1.25;
+      case 'simultaneous':
+        return 2;
+    }
+  }
+
+  private getPause(playbackType: PlaybackType) {
+    switch (playbackType) {
+      case 'sequential':
+        return 0.1;
+      case 'simultaneous':
+        return 0;
+    }
+
   }
 
   private getCurrentLevelPipeline() {

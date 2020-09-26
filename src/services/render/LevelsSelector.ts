@@ -1,5 +1,6 @@
 import { levelMsgs } from '@/models/events';
-import { Levels, LevelType, PlayerLevel } from '@/models/Levels';
+import { Levels, PlaybackType, PlayerLevel } from '@/models/Levels';
+import { InstrumentType } from '@/models/SampleTable';
 import { BehaviorSubject, combineLatest, Observable } from 'rxjs';
 import { map, shareReplay } from 'rxjs/operators';
 import { Inject, Service, Token } from 'typedi';
@@ -11,7 +12,9 @@ export type ILevelsSelector = LevelsSelector;
 @Service(LevelsSelectorToken)
 class LevelsSelector {
   public levelId$ = new BehaviorSubject<number>(1);
-  public levelType$ = new BehaviorSubject<LevelType>('simultaneous');
+  public playbackType$ = new BehaviorSubject<PlaybackType>('simultaneous');
+  public instrumentType$ = new BehaviorSubject<InstrumentType>('piano');
+
   public levels$: Observable<Levels>;
   public currentLevel$: Observable<PlayerLevel>;
 
@@ -19,10 +22,10 @@ class LevelsSelector {
     @Inject(CommRenderToken) comm: ICommRender,
   ) {
     this.levels$ = comm.listen<Levels>(levelMsgs.response).pipe(shareReplay(1));
-    this.currentLevel$ = combineLatest([this.levelId$, this.levelType$, this.levels$]).pipe(
-      map(([levelId, type, levels]) => {
+    this.currentLevel$ = combineLatest([this.levelId$, this.playbackType$, this.instrumentType$, this.levels$]).pipe(
+      map(([levelId, playbackType, instrumentType, levels]) => {
         const lvl = levels.diads.find(l => l.id === levelId) || levels.diads[0];
-        return { ...lvl, type };
+        return { ...lvl, playbackType, instrumentType };
       }),
 
     );
@@ -33,15 +36,25 @@ class LevelsSelector {
     this.levelId$.next(id);
   }
 
-  public selectType(levelType: LevelType) {
-    this.levelType$.next(levelType);
+  public selectPlaybackType(levelType: PlaybackType) {
+    this.playbackType$.next(levelType);
   }
 
-  public getAllLevelTypes(): LevelType[] {
+  public selectInstrumentType(instrumentType: InstrumentType) {
+    this.instrumentType$.next(instrumentType);
+  }
+
+
+  public getAllPlaybackTypes(): PlaybackType[] {
     return ['simultaneous', 'sequential'];
   }
 
-  public getTypeName(levelType: LevelType) {
+  public getAllInstrumentTypes(): InstrumentType[] {
+    return ['piano'];
+  }
+
+
+  public getPlaybackName(levelType: PlaybackType) {
     switch (levelType) {
       case 'simultaneous':
         return 'Harmonic';
