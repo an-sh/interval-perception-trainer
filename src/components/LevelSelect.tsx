@@ -17,21 +17,30 @@ const css = stylesheet({
   group: {
     marginBottom: '20px',
   },
+  rootRange: {
+    marginBottom: '20px',
+  },
 });
 
 export const LevelSelect = defineComponent({
   setup() {
     const levelTypes: GroupType[] = ['consonant', 'dissonant', 'all'];
     const levelsSelector = Container.get(LevelsSelectorToken);
+
     const levels = useObservable(levelsSelector.levels$.pipe(map((lvls) => {
       const consonant = lvls.diads.filter(lvl => lvl.group === 'consonant');
       const dissonant = lvls.diads.filter(lvl => lvl.group === 'dissonant');
       const all = lvls.diads.filter(lvl => lvl.group === 'all');
       return { consonant, dissonant, all };
     })));
-    const playbackType = useObservable(levelsSelector.playbackType$);
 
+    const playbackType = useObservable(levelsSelector.playbackType$);
     const playbackTypes = levelsSelector.getAllPlaybackTypes();
+
+    const rootRanges = levelsSelector.getOctavesData();
+    const selectedRootRange = useObservable(levelsSelector.rootRange$);
+    // tslint:disable-next-line prefer-const
+    let selectedRootRangeId = selectedRootRange.value?.id;
 
     function selectLevel(id: number) {
       levelsSelector.selectLevel(id);
@@ -40,6 +49,13 @@ export const LevelSelect = defineComponent({
 
     function selectPlaybackType(type: PlaybackType) {
       levelsSelector.selectPlaybackType(type);
+    }
+
+    function selectRootRange() {
+      const range = rootRanges.find(itm => itm.id === selectedRootRangeId);
+      if (range) {
+        levelsSelector.selectRootRange(range);
+      }
     }
 
     return () => {
@@ -69,18 +85,28 @@ export const LevelSelect = defineComponent({
         );
       }
 
+      const rootRangeSelector = (
+        <div class={classes('select', css.rootRange)}>
+          <select v-model={selectedRootRangeId} onChange={selectRootRange}>
+            {rootRanges.map((itm) => {
+              return (
+                <option value={itm.id}>{itm.name}</option>
+              );
+            })}
+          </select>
+        </div>
+      );
+
       const playbackTypeSeletor = (
         <div class='buttons has-addons'>
-          {
-            playbackTypes.map(lvl =>
-              <button
-                class={classes('button', lvl === playbackType.value ? 'is-info' : '')}
-                onClick={() => selectPlaybackType(lvl)}
-              >
-                {levelsSelector.getPlaybackName(lvl)}
-              </button>
-            )
-          }
+          {playbackTypes.map(lvl =>
+            <button
+              class={classes('button', lvl === playbackType.value ? 'is-info' : '')}
+              onClick={() => selectPlaybackType(lvl)}
+            >
+              {levelsSelector.getPlaybackName(lvl)}
+            </button>
+          )}
         </div>
       );
 
@@ -89,6 +115,7 @@ export const LevelSelect = defineComponent({
           <div class='container is-fluid'>
             <p class={classes(css.title, 'subtitle', 'is-5')}>Select Training</p>
             {playbackTypeSeletor}
+            {rootRangeSelector}
             {levelsMenu}
           </div>
         );

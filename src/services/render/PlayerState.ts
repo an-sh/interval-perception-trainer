@@ -57,7 +57,7 @@ class PlayerState {
     const currentInterval = this.currentInterval.value;
     const level = this.level.value;
     if (currentInterval && level) {
-      const interval = this.generator.getDiadInterval([id], currentInterval.root);
+      const interval = this.generator.getDiadInterval([id], level.rootRange, currentInterval.root);
       const input = this.makeIntervalPayload(interval, false);
       if (input) {
         this.playInput(input);
@@ -110,7 +110,7 @@ class PlayerState {
       withLatestFrom(this.levels.currentLevel$),
       tap(([, level]) => {
         this.showResult.value = false;
-        const interval = this.generator.getDiadInterval(level.intervals);
+        const interval = this.generator.getDiadInterval(level.intervals, level.rootRange);
         this.currentInterval.value = interval;
         const input = this.getPlayerInput(false);
         this.playInput(input);

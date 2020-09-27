@@ -10,9 +10,16 @@ export interface Level {
   intervals: number[],
 }
 
+export interface RootRange {
+  id: string,
+  name: string;
+  range: [number, number],
+}
+
 export interface PlayerLevel extends Level {
   instrumentType: InstrumentType,
   playbackType: PlaybackType;
+  rootRange: RootRange;
 }
 
 export interface Levels {
