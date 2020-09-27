@@ -2,102 +2,69 @@
   "diads": [
     {
       "id": 1,
-      "name": "Triton and Octave",
-      "intervals": [6, 12],
-      "confidenceDistance": 20,
-      "confidenceThreshold": 0.8
+      "name": "Fifth and Octave",
+      "group": "consonant",
+      "intervals": [7, 12]
     },
     {
       "id": 2,
-      "name": "Fifth and Octave",
-      "intervals": [7, 12],
-      "confidenceDistance": 20,
-      "confidenceThreshold": 0.8
+      "name": "Fourth and Octave",
+      "group": "consonant",
+      "intervals": [5, 12]
     },
     {
       "id": 3,
-      "name": "Fourth and Octave",
-      "intervals": [5, 12],
-      "confidenceDistance": 20,
-      "confidenceThreshold": 0.8
+      "name": "Fourth and Fifth",
+      "group": "consonant",
+      "intervals": [5, 7]
     },
     {
       "id": 4,
-      "name": "Fourth and Fifth",
-      "intervals": [5, 7],
-      "confidenceDistance": 20,
-      "confidenceThreshold": 0.8
+      "name": "Minor/Major Thirds",
+      "group": "consonant",
+      "intervals": [3, 4]
     },
     {
       "id": 5,
-      "name": "Fourth, Fifth, Triton and Octave",
-      "intervals": [5, 6, 7, 12],
-      "confidenceDistance": 40,
-      "confidenceThreshold": 0.8
+      "name": "Minor/Major Sixth",
+      "group": "consonant",
+      "intervals": [8, 9]
     },
     {
       "id": 6,
-      "name": "Minor/Major Thirds",
-      "intervals": [3, 4],
-      "confidenceDistance": 20,
-      "confidenceThreshold": 0.8
+      "name": "Minor/Major Thirds and Sixth",
+      "group": "consonant",
+      "intervals": [3, 4, 8, 9]
     },
     {
       "id": 7,
-      "name": "Minor/Major Sixth",
-      "intervals": [8, 9],
-      "confidenceDistance": 20,
-      "confidenceThreshold": 0.8
+      "name": "All consonant",
+      "group": "consonant",
+      "intervals": [3, 4, 5, 7,  8, 9]
     },
     {
       "id": 8,
-      "name": "Minor/Major Thirds and Sixth",
-      "intervals": [3, 4, 8, 9],
-      "confidenceDistance": 40,
-      "confidenceThreshold": 0.8
+      "name": "Minor/Major Seconds",
+      "group": "dissonant",
+      "intervals": [1, 2]
     },
     {
       "id": 9,
-      "name": "Minor/Major Thirds, Fourth and Fifth",
-      "intervals": [3, 4, 5, 7],
-      "confidenceDistance": 40,
-      "confidenceThreshold": 0.8
+      "name": "Minor/Major Seventh",
+      "group": "dissonant",
+      "intervals": [10, 11]
     },
     {
       "id": 10,
-      "name": "Minor/Major Sixth, Fourth and Fifth",
-      "intervals": [5, 7, 8, 9],
-      "confidenceDistance": 40,
-      "confidenceThreshold": 0.8
+      "name": "All dissonant",
+      "group": "dissonant",
+      "intervals": [1, 2, 6, 10, 11]
     },
     {
       "id": 11,
-      "name": "Minor/Major Seconds",
-      "intervals": [1, 2],
-      "confidenceDistance": 20,
-      "confidenceThreshold": 0.8
-    },
-    {
-      "id": 12,
-      "name": "Minor/Major Seventh",
-      "intervals": [10, 11],
-      "confidenceDistance": 20,
-      "confidenceThreshold": 0.8
-    },
-    {
-      "id": 13,
-      "name": "Minor/Major Seconds and Seventh and Triton",
-      "intervals": [1, 2, 6, 10, 11],
-      "confidenceDistance": 50,
-      "confidenceThreshold": 0.8
-    },
-    {
-      "id": 14,
       "name": "All Intervals",
-      "intervals": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-      "confidenceDistance": 100,
-      "confidenceThreshold": 0.8
+      "group": "all",
+      "intervals": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
     }
-
   ]
 }

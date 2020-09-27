@@ -29,7 +29,15 @@ export const Player = defineComponent({
     const { showResult, selectedIntervalId, currentInterval, level } = state;
     const actions = getBoundMethods(
       state,
-      'playRandom', 'repeat', 'repeatPerfect', 'makeChoice', 'getIntervalName', 'getIntervalNoteNames', 'playFromRoot', 'isMatchingChoice', 'exit',
+      'playRandom',
+      'repeat',
+      'repeatPerfect',
+      'makeChoice',
+      'getIntervalName',
+      'getIntervalNoteNames',
+      'playFromRoot',
+      'isMatchingChoice',
+      'exit',
     );
 
     const isCorrect = computed(actions.isMatchingChoice);
@@ -48,33 +56,59 @@ export const Player = defineComponent({
             } else if (!isCorrect.value && id === currentInterval.value?.interval) {
               classString += ' is-primary';
             }
-            return <div class={css.choiceButton}><button class={classString} onClick={() => actions.playFromRoot(id)}>{name}</button></div>;
+            return (
+              <div class={css.choiceButton}>
+                <button class={classString} onClick={() => actions.playFromRoot(id)}>
+                  {name}
+                </button>
+              </div>
+            );
           } else {
-            return <div class={css.choiceButton}><button class='button is-small' onClick={() => actions.makeChoice(id)}>{name}</button></div>;
+            return (
+              <div class={css.choiceButton}>
+                <button class='button is-small' onClick={() => actions.makeChoice(id)}>
+                  {name}
+                </button>
+              </div>
+            );
           }
         });
       }
+
       let controlls = <div></div>;
       if (level.value) {
         controlls = (
           <div class={classes(css.controls)}>
-            {showResult.value || !currentInterval.value ? <button class={classes(css.actionButton, 'button')} onClick={actions.exit}>Exit</button> : ''}
-            {currentInterval.value ? <button class={classes(css.actionButton, 'button')} onClick={actions.repeat}>Repeat TET</button> : ''}
-            {currentInterval.value ? <button class={classes(css.actionButton, 'button')} onClick={actions.repeatPerfect}>Play Pure</button> : ''}
-            {showResult.value || !currentInterval.value ? <button class={classes(css.actionButton, 'button is-primary')} onClick={actions.playRandom}>Next</button> : ''}
+            {showResult.value ||
+              !currentInterval.value ?
+              <button class={classes(css.actionButton, 'button')} onClick={actions.exit}>Exit</button> :
+              ''}
+            {currentInterval.value ?
+              <button class={classes(css.actionButton, 'button')} onClick={actions.repeat}>Repeat TET</button> :
+              ''}
+            {currentInterval.value ?
+              <button class={classes(css.actionButton, 'button')} onClick={actions.repeatPerfect}>Play Pure</button> :
+              ''}
+            {showResult.value ||
+              !currentInterval.value ?
+              <button class={classes(css.actionButton, 'button is-primary')} onClick={actions.playRandom}>Next</button> : ''
+            }
           </div>
         );
       }
+
       return (
         <div class='container is-fluid'>
-          <p class={classes(css.title, 'subtitle', 'is-5')}>{level.value?.name}</p>
+          <p class={classes(css.title, 'subtitle', 'is-5')}>
+            {level.value?.name}
+          </p>
           {controlls}
           {intervalSelect}
-          {
-            showResult.value && currentInterval.value ?
-              <div class={classes(css.noteNames, 'is-size-7')}>Interval: {actions.getIntervalNoteNames(currentInterval.value)}</div> :
-              ''
-          }
+          {showResult.value && currentInterval.value ?
+            <div class={classes(css.noteNames, 'is-size-7')}>
+              Interval: {actions.getIntervalNoteNames(currentInterval.value)}
+            </div> :
+            ''}
         </div>
       );
     }
