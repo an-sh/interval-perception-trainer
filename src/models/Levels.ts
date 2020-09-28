@@ -20,6 +20,7 @@ export interface PlayerLevel extends Level {
   instrumentType: InstrumentType,
   playbackType: PlaybackType;
   rootRange: RootRange;
+  isPerfect: boolean;
 }
 
 export interface Levels {

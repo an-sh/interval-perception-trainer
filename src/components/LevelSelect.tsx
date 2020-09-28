@@ -17,9 +17,14 @@ const css = stylesheet({
   group: {
     marginBottom: '20px',
   },
-  rootRange: {
+  options: {
     marginBottom: '20px',
+    display: 'flex',
+    flexDirection: 'row',
   },
+  rootRange: {
+    marginRight: '20px',
+  }
 });
 
 export const LevelSelect = defineComponent({
@@ -42,6 +47,10 @@ export const LevelSelect = defineComponent({
     // tslint:disable-next-line prefer-const
     let selectedRootRangeId = selectedRootRange.value?.id;
 
+    const isPerfect = useObservable(levelsSelector.isPerfect$);
+    // tslint:disable-next-line prefer-const
+    let selectedTuningTypeId: 'TET' | 'Perfect' = isPerfect.value ? 'Perfect' : 'TET';
+
     function selectLevel(id: number) {
       levelsSelector.selectLevel(id);
       router.push({ name: routeNames.training });
@@ -55,6 +64,19 @@ export const LevelSelect = defineComponent({
       const range = rootRanges.find(itm => itm.id === selectedRootRangeId);
       if (range) {
         levelsSelector.selectRootRange(range);
+      }
+    }
+
+    function selectTuningType() {
+      switch (selectedTuningTypeId) {
+        case 'Perfect': {
+          levelsSelector.setTunungType(true);
+          return;
+        }
+        case 'TET': {
+          levelsSelector.setTunungType(false);
+          return;
+        }
       }
     }
 
@@ -85,15 +107,23 @@ export const LevelSelect = defineComponent({
         );
       }
 
-      const rootRangeSelector = (
-        <div class={classes('select', css.rootRange)}>
-          <select v-model={selectedRootRangeId} onChange={selectRootRange}>
-            {rootRanges.map((itm) => {
-              return (
-                <option value={itm.id}>{itm.name}</option>
-              );
-            })}
-          </select>
+      const optionsSelectors = (
+        <div class={classes(css.options)}>
+          <div class={classes('select', css.rootRange)}>
+            <select v-model={selectedRootRangeId} onChange={selectRootRange}>
+              {rootRanges.map((itm) => {
+                return (
+                  <option value={itm.id}>{itm.name}</option>
+                );
+              })}
+            </select>
+          </div>
+          <div class={classes('select')}>
+            <select v-model={selectedTuningTypeId} onChange={selectTuningType}>
+              <option value='Perfect'>Perfect</option>
+              <option value='TET'>TET</option>
+            </select>
+          </div>
         </div>
       );
 
@@ -115,7 +145,7 @@ export const LevelSelect = defineComponent({
           <div class='container is-fluid'>
             <p class={classes(css.title, 'subtitle', 'is-5')}>Select Training</p>
             {playbackTypeSeletor}
-            {rootRangeSelector}
+            {optionsSelectors}
             {levelsMenu}
           </div>
         );

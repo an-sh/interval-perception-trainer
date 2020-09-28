@@ -58,7 +58,8 @@ class PlayerState {
     const level = this.level.value;
     if (currentInterval && level) {
       const interval = this.generator.getDiadInterval([id], level.rootRange, currentInterval.root);
-      const input = this.makeIntervalPayload(interval, false);
+      const isPerfect = Boolean(this.level.value?.isPerfect);
+      const input = this.makeIntervalPayload(interval, isPerfect);
       if (input) {
         this.playInput(input);
       }
@@ -66,12 +67,8 @@ class PlayerState {
   }
 
   repeat() {
-    const input = this.getPlayerInput(false);
-    this.playInput(input);
-  }
-
-  repeatPerfect() {
-    const input = this.getPlayerInput(true);
+    const isPerfect = Boolean(this.level.value?.isPerfect);
+    const input = this.getPlayerInput(isPerfect);
     this.playInput(input);
   }
 
@@ -142,7 +139,6 @@ class PlayerState {
       return { freqs, duration, pause, instrumentType, playbackType };
     }
     return null;
-
   }
 
   private getDuration(playbackType: PlaybackType) {

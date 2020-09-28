@@ -31,7 +31,6 @@ export const Player = defineComponent({
       state,
       'playRandom',
       'repeat',
-      'repeatPerfect',
       'makeChoice',
       'getIntervalName',
       'getIntervalNoteNames',
@@ -79,18 +78,13 @@ export const Player = defineComponent({
       if (level.value) {
         controlls = (
           <div class={classes(css.controls)}>
-            {showResult.value ||
-              !currentInterval.value ?
+            {showResult.value || !currentInterval.value ?
               <button class={classes(css.actionButton, 'button')} onClick={actions.exit}>Exit</button> :
               ''}
-            {currentInterval.value ?
-              <button class={classes(css.actionButton, 'button')} onClick={actions.repeat}>Repeat TET</button> :
+            {!showResult.value && currentInterval.value ?
+              <button class={classes(css.actionButton, 'button')} onClick={actions.repeat}>Repeat</button> :
               ''}
-            {currentInterval.value ?
-              <button class={classes(css.actionButton, 'button')} onClick={actions.repeatPerfect}>Play Pure</button> :
-              ''}
-            {showResult.value ||
-              !currentInterval.value ?
+            {showResult.value || !currentInterval.value ?
               <button class={classes(css.actionButton, 'button is-primary')} onClick={actions.playRandom}>Next</button> : ''
             }
           </div>

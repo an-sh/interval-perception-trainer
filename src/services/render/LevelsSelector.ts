@@ -11,23 +11,24 @@ export type ILevelsSelector = LevelsSelector;
 
 @Service(LevelsSelectorToken)
 class LevelsSelector {
-  public levelId$ = new BehaviorSubject<number>(1);
+  public levelId$ = new BehaviorSubject(1);
   public playbackType$ = new BehaviorSubject<PlaybackType>('simultaneous');
   public instrumentType$ = new BehaviorSubject<InstrumentType>('piano');
   public rootRange$ = new BehaviorSubject<RootRange>(this.getOctavesData()[0]);
   public levels$: Observable<Levels>;
   public currentLevel$: Observable<PlayerLevel>;
+  public isPerfect$ = new BehaviorSubject(true);
 
   constructor(
     @Inject(CommRenderToken) comm: ICommRender,
   ) {
     this.levels$ = comm.listen<Levels>(levelMsgs.response).pipe(shareReplay(1));
     this.currentLevel$ = combineLatest(
-      [this.levelId$, this.playbackType$, this.instrumentType$, this.levels$, this.rootRange$]
+      [this.levelId$, this.playbackType$, this.instrumentType$, this.levels$, this.rootRange$, this.isPerfect$]
     ).pipe(
-      map(([levelId, playbackType, instrumentType, levels, rootRange]) => {
+      map(([levelId, playbackType, instrumentType, levels, rootRange, isPerfect]) => {
         const lvl = levels.diads.find(l => l.id === levelId) || levels.diads[0];
-        return { ...lvl, playbackType, instrumentType, rootRange };
+        return { ...lvl, playbackType, instrumentType, rootRange, isPerfect };
       }),
 
     );
@@ -48,6 +49,10 @@ class LevelsSelector {
 
   public selectRootRange(range: RootRange) {
     this.rootRange$.next(range);
+  }
+
+  public setTunungType(isPerfect: boolean) {
+    this.isPerfect$.next(isPerfect);
   }
 
   public getAllPlaybackTypes(): PlaybackType[] {

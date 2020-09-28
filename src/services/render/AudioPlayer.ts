@@ -85,6 +85,7 @@ class AudioPlayer {
           const rate = this.getPlayRatio(freq, sample.freq);
           return { ...sample, rate };
         });
+        // console.log(data);
         return this.makeSamplerAudioPipeline(data, input);
       }
     }
