@@ -1,6 +1,6 @@
 import { tableMsgs } from '@/models/events';
 import { InstrumentType, SampleData, SampleTable } from '@/models/SampleTable';
-import { from, Observable, Subject, Subscription } from 'rxjs';
+import { from, of, Observable, Subject, Subscription } from 'rxjs';
 import { map, scan, shareReplay, switchMap, toArray, withLatestFrom, concatMap } from 'rxjs/operators';
 import { Inject, Service, Token } from 'typedi';
 import { CommRenderToken, ICommRender } from './CommRender';
@@ -88,6 +88,9 @@ class AudioPlayer {
         // console.log(data);
         return this.makeSamplerAudioPipeline(data, input);
       }
+      case 'sine': {
+        return this.makeOscillatorPipeline(input);
+      }
     }
   }
 
@@ -124,6 +127,29 @@ class AudioPlayer {
       toArray(),
       map(decodedData => this.setSamplerNodes(decodedData, input)),
     );
+  }
+
+  private makeOscillatorPipeline(input: PlayerInput) {
+    return of(null).pipe(
+      map(() => this.setOscillatorNodes(input)),
+    );
+  }
+
+  private setOscillatorNodes(input: PlayerInput) {
+    let start = this.audioCtx.currentTime;
+    const sources: AudioScheduledSourceNode[] = [];
+    const nodes: AudioNode[] = [];
+    for (const freq of input.freqs) {
+      const source = this.audioCtx.createOscillator();
+      sources.push(source);
+      source.type = 'sine';
+      source.frequency.setValueAtTime(freq, start);
+
+      const gainNode = this.addGainFadeNode(source, input, start, 0.1);
+      nodes.push(gainNode);
+      start = this.setSourceTimings(source, input, start);
+    }
+    return { sources, nodes };
   }
 
   private setSamplerNodes(decodedData: DecodedSamplerItem[], input: PlayerInput) {

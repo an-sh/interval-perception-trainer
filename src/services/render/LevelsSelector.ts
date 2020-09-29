@@ -6,6 +6,8 @@ import { map, shareReplay } from 'rxjs/operators';
 import { Inject, Service, Token } from 'typedi';
 import { CommRenderToken, ICommRender } from './CommRender';
 
+export type Tuning = 'TET' | 'perfect';
+
 export const LevelsSelectorToken = new Token<LevelsSelector>();
 export type ILevelsSelector = LevelsSelector;
 
@@ -51,8 +53,25 @@ class LevelsSelector {
     this.rootRange$.next(range);
   }
 
-  public setTunungType(isPerfect: boolean) {
-    this.isPerfect$.next(isPerfect);
+  public setTunungType(type: Tuning) {
+    switch (type) {
+      case 'perfect': {
+        this.isPerfect$.next(true);
+        return;
+      }
+      case 'TET': {
+        this.isPerfect$.next(true);;
+        return;
+      }
+    }
+  }
+
+  public getTuningTypes(): Tuning[] {
+    return ['perfect', 'TET'];
+  }
+
+  public getTuning(isPerfect: boolean): Tuning {
+    return isPerfect ? 'perfect' : 'TET';
   }
 
   public getAllPlaybackTypes(): PlaybackType[] {
@@ -60,7 +79,7 @@ class LevelsSelector {
   }
 
   public getAllInstrumentTypes(): InstrumentType[] {
-    return ['piano'];
+    return ['piano', 'sine'];
   }
 
   public getOctavesData(): RootRange[] {

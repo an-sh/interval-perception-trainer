@@ -1,5 +1,5 @@
 
-export type InstrumentType = 'piano';
+export type InstrumentType = 'piano' | 'sine';
 
 export interface SampleData { freq: number, data: Uint8Array };
 

@@ -22,9 +22,9 @@ const css = stylesheet({
     display: 'flex',
     flexDirection: 'row',
   },
-  rootRange: {
+  optionsItem: {
     marginRight: '20px',
-  }
+  },
 });
 
 export const LevelSelect = defineComponent({
@@ -47,9 +47,15 @@ export const LevelSelect = defineComponent({
     // tslint:disable-next-line prefer-const
     let selectedRootRangeId = selectedRootRange.value?.id;
 
+    const tunungs = levelsSelector.getTuningTypes();
     const isPerfect = useObservable(levelsSelector.isPerfect$);
     // tslint:disable-next-line prefer-const
-    let selectedTuningTypeId: 'TET' | 'Perfect' = isPerfect.value ? 'Perfect' : 'TET';
+    let selectedTuningTypeId = levelsSelector.getTuning(isPerfect.value);
+
+    const instruments = levelsSelector.getAllInstrumentTypes();
+    const instrument = useObservable(levelsSelector.instrumentType$);
+    // tslint:disable-next-line prefer-const
+    let selectedInstrumentId = instrument.value;
 
     function selectLevel(id: number) {
       levelsSelector.selectLevel(id);
@@ -68,17 +74,14 @@ export const LevelSelect = defineComponent({
     }
 
     function selectTuningType() {
-      switch (selectedTuningTypeId) {
-        case 'Perfect': {
-          levelsSelector.setTunungType(true);
-          return;
-        }
-        case 'TET': {
-          levelsSelector.setTunungType(false);
-          return;
-        }
-      }
+      levelsSelector.setTunungType(selectedTuningTypeId);
     }
+
+    function selectInstrument() {
+      levelsSelector.selectInstrumentType(selectedInstrumentId);
+    }
+
+    const capitalize = (s: string) => s.replace(/\b\w/g, c => c.toUpperCase());
 
     return () => {
       let levelsMenu = <div></div>;
@@ -109,7 +112,7 @@ export const LevelSelect = defineComponent({
 
       const optionsSelectors = (
         <div class={classes(css.options)}>
-          <div class={classes('select', css.rootRange)}>
+          <div class={classes('select', css.optionsItem)}>
             <select v-model={selectedRootRangeId} onChange={selectRootRange}>
               {rootRanges.map((itm) => {
                 return (
@@ -118,12 +121,25 @@ export const LevelSelect = defineComponent({
               })}
             </select>
           </div>
-          <div class={classes('select')}>
+          <div class={classes('select', css.optionsItem)}>
             <select v-model={selectedTuningTypeId} onChange={selectTuningType}>
-              <option value='Perfect'>Perfect</option>
-              <option value='TET'>TET</option>
+              {tunungs.map((itm) => {
+                return (
+                  <option value={itm}>{capitalize(itm)}</option>
+                );
+              })}
             </select>
           </div>
+          <div class={classes('select', css.optionsItem)}>
+            <select v-model={selectedInstrumentId} onChange={selectInstrument}>
+              {instruments.map((itm) => {
+                return (
+                  <option value={itm}>{capitalize(itm)}</option>
+                );
+              })}
+            </select>
+          </div>
+
         </div>
       );
 
