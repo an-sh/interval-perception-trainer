@@ -5,7 +5,7 @@ import { LevelsSelectorToken } from '@/services/render/LevelsSelector';
 import { map } from 'rxjs/operators';
 import { Container } from 'typedi';
 import { classes, stylesheet } from 'typestyle';
-import { defineComponent } from 'vue';
+import { computed, defineComponent } from 'vue';
 
 const css = stylesheet({
   choiceButton: {
@@ -29,9 +29,9 @@ const css = stylesheet({
 
 export const LevelSelect = defineComponent({
   setup() {
-    const levelTypes: GroupType[] = ['consonant', 'dissonant', 'all'];
     const levelsSelector = Container.get(LevelsSelectorToken);
 
+    const levelTypes: GroupType[] = ['consonant', 'dissonant', 'all'];
     const levels = useObservable(levelsSelector.levels$.pipe(map((lvls) => {
       const consonant = lvls.diads.filter(lvl => lvl.group === 'consonant');
       const dissonant = lvls.diads.filter(lvl => lvl.group === 'dissonant');
@@ -44,18 +44,13 @@ export const LevelSelect = defineComponent({
 
     const rootRanges = levelsSelector.getOctavesData();
     const selectedRootRange = useObservable(levelsSelector.rootRange$);
-    // tslint:disable-next-line prefer-const
-    let selectedRootRangeId = selectedRootRange.value?.id;
 
     const tunungs = levelsSelector.getTuningTypes();
     const isPerfect = useObservable(levelsSelector.isPerfect$);
-    // tslint:disable-next-line prefer-const
-    let selectedTuningTypeId = levelsSelector.getTuning(isPerfect.value);
+    const selectedTuningType = computed(() => levelsSelector.getTuning(isPerfect.value));
 
     const instruments = levelsSelector.getAllInstrumentTypes();
     const instrument = useObservable(levelsSelector.instrumentType$);
-    // tslint:disable-next-line prefer-const
-    let selectedInstrumentId = instrument.value;
 
     function selectLevel(id: number) {
       levelsSelector.selectLevel(id);
@@ -66,19 +61,19 @@ export const LevelSelect = defineComponent({
       levelsSelector.selectPlaybackType(type);
     }
 
-    function selectRootRange() {
-      const range = rootRanges.find(itm => itm.id === selectedRootRangeId);
+    function selectRootRange(arg: any) {
+      const range = rootRanges.find(itm => itm.id === arg.target.value);
       if (range) {
         levelsSelector.selectRootRange(range);
       }
     }
 
-    function selectTuningType() {
-      levelsSelector.setTunungType(selectedTuningTypeId);
+    function selectTuningType(arg: any) {
+      levelsSelector.setTunungType(arg.target.value);
     }
 
-    function selectInstrument() {
-      levelsSelector.selectInstrumentType(selectedInstrumentId);
+    function selectInstrument(arg: any) {
+      levelsSelector.selectInstrumentType(arg.target.value);
     }
 
     const capitalize = (s: string) => s.replace(/\b\w/g, c => c.toUpperCase());
@@ -113,7 +108,7 @@ export const LevelSelect = defineComponent({
       const optionsSelectors = (
         <div class={classes(css.options)}>
           <div class={classes('select', css.optionsItem)}>
-            <select v-model={selectedRootRangeId} onChange={selectRootRange}>
+            <select value={selectedRootRange.value?.id} onChange={selectRootRange}>
               {rootRanges.map((itm) => {
                 return (
                   <option value={itm.id}>{itm.name}</option>
@@ -122,7 +117,7 @@ export const LevelSelect = defineComponent({
             </select>
           </div>
           <div class={classes('select', css.optionsItem)}>
-            <select v-model={selectedTuningTypeId} onChange={selectTuningType}>
+            <select value={selectedTuningType.value} onChange={selectTuningType}>
               {tunungs.map((itm) => {
                 return (
                   <option value={itm}>{capitalize(itm)}</option>
@@ -131,7 +126,7 @@ export const LevelSelect = defineComponent({
             </select>
           </div>
           <div class={classes('select', css.optionsItem)}>
-            <select v-model={selectedInstrumentId} onChange={selectInstrument}>
+            <select value={instrument.value} onChange={selectInstrument}>
               {instruments.map((itm) => {
                 return (
                   <option value={itm}>{capitalize(itm)}</option>
