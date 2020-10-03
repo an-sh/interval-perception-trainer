@@ -141,8 +141,7 @@ class AudioPlayer {
     for (const freq of input.freqs) {
       const Ainv = -this.getAWeighting(freq)
       const amp = this.calcAmp(Ainv);
-      const vol = Math.min(0.09 * amp, 0.5);
-      console.log(freq, Ainv, vol);
+      const vol = Math.min(0.075 * amp, 0.5);
       const source = this.audioCtx.createOscillator();
       sources.push(source);
       source.type = 'sine';
