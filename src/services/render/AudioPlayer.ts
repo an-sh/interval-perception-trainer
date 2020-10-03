@@ -85,7 +85,6 @@ class AudioPlayer {
           const rate = this.getPlayRatio(freq, sample.freq);
           return { ...sample, rate };
         });
-        // console.log(data);
         return this.makeSamplerAudioPipeline(data, input);
       }
       case 'sine': {
@@ -140,16 +139,37 @@ class AudioPlayer {
     const sources: AudioScheduledSourceNode[] = [];
     const nodes: AudioNode[] = [];
     for (const freq of input.freqs) {
+      const Ainv = -this.getAWeighting(freq)
+      const amp = this.calcAmp(Ainv);
+      const vol = Math.min(0.09 * amp, 0.5);
+      console.log(freq, Ainv, vol);
       const source = this.audioCtx.createOscillator();
       sources.push(source);
       source.type = 'sine';
       source.frequency.setValueAtTime(freq, start);
 
-      const gainNode = this.addGainFadeNode(source, input, start, 0.1);
+      const gainNode = this.addGainFadeNode(source, input, start, vol);
       nodes.push(gainNode);
       start = this.setSourceTimings(source, input, start);
     }
     return { sources, nodes };
+  }
+
+  // A-weighting calc
+  private getAWeighting(freq: number) {
+    const N1 = 12194 ** 2;
+    const D1 = 20.6 ** 2;
+    const D2 = 107.7 ** 2;
+    const D3 = 737.9 ** 2;
+    const D4 = 12194 ** 2;
+    const fs = freq ** 2;
+    const Ra = (N1 * (freq ** 4)) / ((fs + D1) * Math.sqrt((fs + D2) * (fs + D3)) * (fs + D4));
+    const A = 20 * Math.log10(Ra) + 2.0;
+    return A;
+  }
+
+  private calcAmp(db: number) {
+    return 10 ** (db / 20);
   }
 
   private setSamplerNodes(decodedData: DecodedSamplerItem[], input: PlayerInput) {

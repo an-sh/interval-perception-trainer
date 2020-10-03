@@ -60,7 +60,7 @@ class LevelsSelector {
         return;
       }
       case 'TET': {
-        this.isPerfect$.next(true);;
+        this.isPerfect$.next(false);
         return;
       }
     }
