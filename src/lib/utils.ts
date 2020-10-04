@@ -11,3 +11,7 @@ export function getBoundMethods<T extends object, U extends keyof T>(inst: T, ..
   }
   return result;
 }
+
+export function getRandomNumber(minimum: number, maximum: number) {
+  return Math.floor(Math.random() * (maximum - minimum + 1)) + minimum;
+}

@@ -5,6 +5,7 @@ import { map, scan, shareReplay, switchMap, toArray, withLatestFrom, concatMap }
 import { Inject, Service, Token } from 'typedi';
 import { CommRenderToken, ICommRender } from './CommRender';
 import { PlaybackType } from '@/models/Levels';
+import { getRandomNumber } from '@/lib/utils';
 
 export const AudioPlayerToken = new Token<AudioPlayer>();
 export type IAudioPlayer = AudioPlayer;
@@ -221,8 +222,9 @@ class AudioPlayer {
     const { duration, pause, playbackType } = input;
     source.start(start);
     source.stop(start + duration);
-    const delta = (duration + pause);
-    start += (playbackType === 'simultaneous' ? 0 : delta);
+    const offset = getRandomNumber(150, 200) / 50000; // 3-4ms
+    const delta = (playbackType === 'simultaneous') ? offset : (duration + pause);
+    start += delta;
     return start;
   }
 }

@@ -1,3 +1,4 @@
+import { getRandomNumber } from '@/lib/utils';
 import { Interval } from '@/models/Interval';
 import { RootRange } from '@/models/Levels';
 import { Inject, Service, Token } from 'typedi';
@@ -12,14 +13,10 @@ class IntervalGenerator {
     @Inject(NotationConverterToken) private notationConverter: INotationConverter,
   ) { }
 
-  private getRandomNumber(minimum: number, maximum: number) {
-    return Math.floor(Math.random() * (maximum - minimum + 1)) + minimum;
-  }
-
   getDiadInterval(avalaibleIds: number[], rootRange: RootRange, fixedRoot?: number): Interval {
     const [min, max] = rootRange.range;
-    const root = fixedRoot ?? this.getRandomNumber(min, max);
-    const idx = this.getRandomNumber(0, avalaibleIds.length - 1);
+    const root = fixedRoot ?? getRandomNumber(min, max);
+    const idx = getRandomNumber(0, avalaibleIds.length - 1);
     const interval = avalaibleIds[idx];
     const note = root + interval;
     const notes = [note];
