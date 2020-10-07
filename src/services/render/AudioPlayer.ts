@@ -222,7 +222,7 @@ class AudioPlayer {
     const { duration, pause, playbackType } = input;
     source.start(start);
     source.stop(start + duration);
-    const offset = getRandomNumber(150, 200) / 50000; // 3-4ms
+    const offset = getRandomNumber(250, 500) / 50000; // 5-10ms
     const delta = (playbackType === 'simultaneous') ? offset : (duration + pause);
     start += delta;
     return start;
