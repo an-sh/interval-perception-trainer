@@ -37,7 +37,7 @@ class MainState {
     const getTablePipeline$ = combineLatest([
       this.window$,
       this.comm.listen(tableMsgs.request).pipe(
-        switchMap(() => this.loader.getTable()),
+        switchMap(() => this.loader.getTables()),
       )],
     ).pipe(
       tap(([window, table]) => this.comm.send(window, tableMsgs.response, table))

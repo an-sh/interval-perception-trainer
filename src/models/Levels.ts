@@ -1,7 +1,10 @@
 import { InstrumentType } from './SampleTable';
 
-export type PlaybackType = 'simultaneous' | 'sequential';
-export type GroupType = 'consonant' | 'dissonant' | 'all';
+export const playbackTypes = ['simultaneous', 'sequential'] as const;
+export type PlaybackType = typeof playbackTypes[number];
+
+export const groupTypes = ['consonant', 'dissonant', 'all'] as const;
+export type GroupType = typeof groupTypes[number];
 
 export interface Level {
   id: number,

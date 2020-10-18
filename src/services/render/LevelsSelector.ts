@@ -1,12 +1,13 @@
 import { levelMsgs } from '@/models/events';
-import { Levels, PlaybackType, PlayerLevel, RootRange } from '@/models/Levels';
-import { InstrumentType } from '@/models/SampleTable';
+import { Levels, PlaybackType, playbackTypes, PlayerLevel, RootRange } from '@/models/Levels';
+import { InstrumentType, instrumentTypes } from '@/models/SampleTable';
 import { BehaviorSubject, combineLatest, Observable } from 'rxjs';
 import { map, shareReplay } from 'rxjs/operators';
 import { Inject, Service, Token } from 'typedi';
 import { CommRenderToken, ICommRender } from './CommRender';
 
-export type Tuning = 'TET' | 'perfect';
+export const tunings = ['TET', 'perfect'];
+export type Tuning = typeof tunings[number];
 
 export const LevelsSelectorToken = new Token<LevelsSelector>();
 export type ILevelsSelector = LevelsSelector;
@@ -15,7 +16,7 @@ export type ILevelsSelector = LevelsSelector;
 class LevelsSelector {
   public levelId$ = new BehaviorSubject(1);
   public playbackType$ = new BehaviorSubject<PlaybackType>('simultaneous');
-  public instrumentType$ = new BehaviorSubject<InstrumentType>('piano');
+  public instrumentType$ = new BehaviorSubject<InstrumentType>('mixed');
   public rootRange$ = new BehaviorSubject<RootRange>(this.getOctavesData()[0]);
   public levels$: Observable<Levels>;
   public currentLevel$: Observable<PlayerLevel>;
@@ -66,20 +67,20 @@ class LevelsSelector {
     }
   }
 
-  public getTuningTypes(): Tuning[] {
-    return ['perfect', 'TET'];
+  public getTuningTypes(): readonly Tuning[] {
+    return tunings;
   }
 
   public getTuning(isPerfect: boolean): Tuning {
     return isPerfect ? 'perfect' : 'TET';
   }
 
-  public getAllPlaybackTypes(): PlaybackType[] {
-    return ['simultaneous', 'sequential'];
+  public getAllPlaybackTypes(): readonly PlaybackType[] {
+    return playbackTypes;
   }
 
-  public getAllInstrumentTypes(): InstrumentType[] {
-    return ['piano', 'sine'];
+  public getAllInstrumentTypes(): readonly InstrumentType[] {
+    return instrumentTypes;
   }
 
   public getOctavesData(): RootRange[] {

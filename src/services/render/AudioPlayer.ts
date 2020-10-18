@@ -1,5 +1,5 @@
 import { tableMsgs } from '@/models/events';
-import { InstrumentType, SampleData, SampleTable } from '@/models/SampleTable';
+import { InstrumentType, sampledInstrumentTypes, SampleData, SampleTable, SampledInstrumentType } from '@/models/SampleTable';
 import { from, of, Observable, Subject, Subscription } from 'rxjs';
 import { map, scan, shareReplay, switchMap, toArray, withLatestFrom, concatMap } from 'rxjs/operators';
 import { Inject, Service, Token } from 'typedi';
@@ -24,11 +24,14 @@ interface PlayerWebAudioState {
 }
 
 interface SamplerItem extends SampleData {
+  instrument: SampledInstrumentType;
   rate: number,
 };
 
-interface BuffersCache {
-  [freq: number]: Observable<BuffersCacheItem>;
+type BuffersCache = {
+  [instrument in SampledInstrumentType]: {
+    [freq: number]: Observable<BuffersCacheItem>;
+  }
 }
 
 interface BuffersCacheItem {
@@ -44,7 +47,12 @@ interface DecodedSamplerItem extends BuffersCacheItem {
 class AudioPlayer {
   public playerInput$: Subject<PlayerInput> = new Subject();
 
-  private buffersCache: BuffersCache = {};
+  private buffersCache: BuffersCache = {
+    piano: {},
+    harpsichord: {},
+    organ: {},
+  };
+
   private audioCtx = new AudioContext();
   private playerPipeline$: Observable<PlayerWebAudioState>;
   private pipelinesSubscription: Subscription | null = null;
@@ -71,7 +79,6 @@ class AudioPlayer {
   }
 
   destroy() {
-    this.buffersCache = {};
     this.audioCtx.close();
     this.pipelinesSubscription?.unsubscribe();
     this.pipelinesSubscription = null;
@@ -80,18 +87,34 @@ class AudioPlayer {
   private play(table: SampleTable, input: PlayerInput) {
     const { instrumentType } = input;
     switch (instrumentType) {
-      case 'piano': {
-        const data = input.freqs.map((freq) => {
-          const sample = this.getClosestSample(table, freq);
-          const rate = this.getPlayRatio(freq, sample.freq);
-          return { ...sample, rate };
-        });
-        return this.makeSamplerAudioPipeline(data, input);
+      case 'piano':
+      case 'harpsichord':
+      case 'organ':
+      case 'mixed': {
+        return this.playSampler(table, input);
       }
       case 'sine': {
         return this.makeOscillatorPipeline(input);
       }
     }
+  }
+
+  private playSampler(table: SampleTable, input: PlayerInput) {
+    const { instrumentType } = input;
+    const data = input.freqs.map((freq) => {
+      const instrument = instrumentType === 'mixed' ?
+        this.getRandomInstrument() :
+        (instrumentType as SampledInstrumentType);
+      const sample = this.getClosestSample(table, freq, instrument);
+      const rate = this.getPlayRatio(freq, sample.freq);
+      return { ...sample, rate, instrument };
+    });
+    return this.makeSamplerAudioPipeline(data, input);
+  }
+
+  private getRandomInstrument() {
+    const idx = getRandomNumber(0, sampledInstrumentTypes.length - 1);
+    return sampledInstrumentTypes[idx];
   }
 
   private stop(state: PlayerWebAudioState) {
@@ -104,10 +127,10 @@ class AudioPlayer {
     }
   }
 
-  private getClosestSample(table: SampleTable, freq: number): SampleData {
+  private getClosestSample(table: SampleTable, freq: number, instrument: InstrumentType): SampleData {
     let minDist = Infinity;
     let closestSample: SampleData;
-    for (const sample of table.samples) {
+    for (const sample of table[instrument].samples) {
       const dist = Math.abs(freq - sample.freq);
       if (dist < minDist) {
         minDist = dist;
@@ -191,14 +214,14 @@ class AudioPlayer {
 
   private decoderCacher(item: SamplerItem) {
     const rateMapper = (cacheItem: BuffersCacheItem) => ({ ...cacheItem, rate: item.rate })
-    if (this.buffersCache[item.freq]) {
-      return this.buffersCache[item.freq].pipe(map(rateMapper));
+    if (this.buffersCache[item.instrument][item.freq]) {
+      return this.buffersCache[item.instrument][item.freq].pipe(map(rateMapper));
     }
     const newCacheItem = from(this.audioCtx.decodeAudioData(item.data.buffer.slice(0))).pipe(
       map(decoded => ({ decoded, freq: item.freq })),
       shareReplay(1),
     );
-    this.buffersCache[item.freq] = newCacheItem;
+    this.buffersCache[item.instrument][item.freq] = newCacheItem;
     return newCacheItem.pipe(map(rateMapper));
   }
 
@@ -222,7 +245,7 @@ class AudioPlayer {
     const { duration, pause, playbackType } = input;
     source.start(start);
     source.stop(start + duration);
-    const offset = getRandomNumber(400, 500) / 50000; // 8-10ms
+    const offset = getRandomNumber(300, 500) / 50000; // 6-10ms
     const delta = (playbackType === 'simultaneous') ? offset : (duration + pause);
     start += delta;
     return start;
