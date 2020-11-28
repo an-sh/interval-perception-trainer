@@ -64,7 +64,7 @@ class AudioPlayer {
   ) {
     this.playerPipeline$ = this.playerInput$.pipe(
       withLatestFrom(comm.listen<SampleTable>(tableMsgs.response).pipe(shareReplay(1))),
-      switchMap(([input, pianoTable]) => this.play(pianoTable, input)),
+      switchMap(([input, sampleTable]) => this.play(sampleTable, input)),
       scan(
         (prevState, nextState) => {
           if (prevState) {
