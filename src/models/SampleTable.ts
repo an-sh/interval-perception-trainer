@@ -1,6 +1,6 @@
 
-export const instrumentTypes = ['piano', 'harpsichord', 'organ', 'mixed', 'sine'] as const;
-export const sampledInstrumentTypes = ['piano', 'harpsichord', 'organ'] as const;
+export const sampledInstrumentTypes = ['guitar', 'harpsichord', 'organ', 'piano', 'strings', 'violin'] as const;
+export const instrumentTypes = [...sampledInstrumentTypes, 'mixed', 'sine'] as const;
 
 export type SampledInstrumentType = typeof sampledInstrumentTypes[number];
 export type InstrumentType = typeof instrumentTypes[number];

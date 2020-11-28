@@ -48,9 +48,12 @@ class AudioPlayer {
   public playerInput$: Subject<PlayerInput> = new Subject();
 
   private buffersCache: BuffersCache = {
-    piano: {},
+    guitar: {},
     harpsichord: {},
     organ: {},
+    piano: {},
+    strings: {},
+    violin: {},
   };
 
   private audioCtx = new AudioContext();
@@ -64,7 +67,7 @@ class AudioPlayer {
   ) {
     this.playerPipeline$ = this.playerInput$.pipe(
       withLatestFrom(comm.listen<SampleTable>(tableMsgs.response).pipe(shareReplay(1))),
-      switchMap(([input, sampleTable]) => this.play(sampleTable, input)),
+      switchMap(([input, sampleTable]) => this.makePlayerPipeline(sampleTable, input)),
       scan(
         (prevState, nextState) => {
           if (prevState) {
@@ -84,14 +87,17 @@ class AudioPlayer {
     this.pipelinesSubscription = null;
   }
 
-  private play(table: SampleTable, input: PlayerInput) {
+  private makePlayerPipeline(table: SampleTable, input: PlayerInput) {
     const { instrumentType } = input;
     switch (instrumentType) {
-      case 'piano':
+      case 'guitar':
       case 'harpsichord':
       case 'organ':
+      case 'piano':
+      case 'strings':
+      case 'violin':
       case 'mixed': {
-        return this.playSampler(table, input);
+        return this.makeSamplerAudioPipeline(table, input);
       }
       case 'sine': {
         return this.makeOscillatorPipeline(input);
@@ -99,9 +105,18 @@ class AudioPlayer {
     }
   }
 
-  private playSampler(table: SampleTable, input: PlayerInput) {
+  private makeSamplerAudioPipeline(table: SampleTable, input: PlayerInput) {
+    const data = this.getSamplerData(table, input);
+    return from(data).pipe(
+      concatMap(item => this.decoderCacher(item)),
+      toArray(),
+      map(decodedData => this.setSamplerNodes(decodedData, input)),
+    );
+  }
+
+  private getSamplerData(table: SampleTable, input: PlayerInput) {
     const { instrumentType } = input;
-    const data = input.freqs.map((freq) => {
+    return input.freqs.map((freq) => {
       const instrument = instrumentType === 'mixed' ?
         this.getRandomInstrument() :
         (instrumentType as SampledInstrumentType);
@@ -109,7 +124,6 @@ class AudioPlayer {
       const rate = this.getPlayRatio(freq, sample.freq);
       return { ...sample, rate, instrument };
     });
-    return this.makeSamplerAudioPipeline(data, input);
   }
 
   private getRandomInstrument() {
@@ -142,14 +156,6 @@ class AudioPlayer {
 
   private getPlayRatio(targetFreq: number, sampleFreq: number) {
     return targetFreq / sampleFreq;
-  }
-
-  private makeSamplerAudioPipeline(data: SamplerItem[], input: PlayerInput): Observable<PlayerWebAudioState> {
-    return from(data).pipe(
-      concatMap(item => this.decoderCacher(item)),
-      toArray(),
-      map(decodedData => this.setSamplerNodes(decodedData, input)),
-    );
   }
 
   private makeOscillatorPipeline(input: PlayerInput) {
@@ -245,7 +251,7 @@ class AudioPlayer {
     const { duration, pause, playbackType } = input;
     source.start(start);
     source.stop(start + duration);
-    const offset = getRandomNumber(300, 500) / 50000; // 6-10ms
+    const offset = getRandomNumber(1, 10) / 1000; // 1-10ms
     const delta = (playbackType === 'simultaneous') ? offset : (duration + pause);
     start += delta;
     return start;

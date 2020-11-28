@@ -54,7 +54,7 @@ class LevelsSelector {
     this.rootRange$.next(range);
   }
 
-  public setTunungType(type: Tuning) {
+  public selectTunungType(type: Tuning) {
     switch (type) {
       case 'perfect': {
         this.isPerfect$.next(true);

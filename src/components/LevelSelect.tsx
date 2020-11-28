@@ -69,7 +69,7 @@ export const LevelSelect = defineComponent({
     }
 
     function selectTuningType(arg: any) {
-      levelsSelector.setTunungType(arg.target.value);
+      levelsSelector.selectTunungType(arg.target.value);
     }
 
     function selectInstrument(arg: any) {

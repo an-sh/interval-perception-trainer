@@ -21,7 +21,7 @@
   "dependencies": {
     "bulma": "^0.9.1",
     "core-js": "^3.8.0",
-    "electron": "^10.1.6",
+    "electron": "^11.0.3",
     "rxjs": "^6.6.3",
     "typedi": "^0.8.0",
     "vue": "^3.0.3",
