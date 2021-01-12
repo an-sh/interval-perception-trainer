@@ -56,12 +56,12 @@ export const LevelSelect = defineComponent({
     const rootRanges = levelsSelector.getOctavesData();
     const selectedRootRange = useObservable(levelsSelector.rootRange$);
 
-    const customRoots = levelsSelector.getCustomRootsData();
+    const allCustomRoots = levelsSelector.getAllCustomRoots();
     const selectedRootNotes = useObservable(levelsSelector.customRoots$);
-    const rootsData = useObservable(
+    const roots = useObservable(
       levelsSelector.customRoots$.pipe(
         map(selectedRoots => {
-          const data = customRoots.map((itm) => {
+          const data = allCustomRoots.map((itm) => {
             const isSelected = selectedRoots.includes(itm.note);
             return { ...itm, isSelected };
           });
@@ -176,10 +176,10 @@ export const LevelSelect = defineComponent({
       );
 
       let customRootsSelector = <div></div>;
-      if (selectedRootRange.value && selectedRootRange.value.isCustom && rootsData.value) {
+      if (selectedRootRange.value && selectedRootRange.value.isCustom && roots.value) {
         customRootsSelector = (
           <div class={classes(css.customRoots)}>
-            {rootsData.value.map((itm) => {
+            {roots.value.map((itm) => {
               return (
                 <label class={classes(css.rootItem)}>
                   <input class={classes(css.rootBox)} checked={itm.isSelected} onClick={() => toggleCustomRoot(itm)} type='checkbox' />

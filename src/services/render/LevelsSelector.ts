@@ -129,7 +129,7 @@ class LevelsSelector {
     ]
   }
 
-  public getCustomRootsData(): CustomRoot[] {
+  public getAllCustomRoots(): CustomRoot[] {
     const roots: CustomRoot[] = [];
     for (let note = this.minNote; note <= this.maxNote; note++) {
       const name = this.converter.getNoteName(note);
