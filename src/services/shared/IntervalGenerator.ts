@@ -16,7 +16,7 @@ class IntervalGenerator {
   getDiadInterval(avalaibleIntervalIds: number[], rootRange: RootRange, fixedRoot?: number): Interval {
     let root: number;
     if (fixedRoot != null) {
-      root = fixedRoot
+      root = fixedRoot;
     } else if (rootRange.isCustom) {
       const roots = rootRange.customRoots!;
       const len = roots.length;

@@ -53,7 +53,7 @@ export const LevelSelect = defineComponent({
     const playbackType = useObservable(levelsSelector.playbackType$);
     const playbackTypes = levelsSelector.getAllPlaybackTypes();
 
-    const rootRanges = levelsSelector.getOctavesData();
+    const rootRanges = levelsSelector.getRootRangesData();
     const selectedRootRange = useObservable(levelsSelector.rootRange$);
 
     const allCustomRoots = levelsSelector.getAllCustomRoots();

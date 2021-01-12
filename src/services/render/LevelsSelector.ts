@@ -15,23 +15,50 @@ export type ILevelsSelector = LevelsSelector;
 
 @Service(LevelsSelectorToken)
 class LevelsSelector {
+  private readonly minNote = 28;
+  private readonly c4Note = 40;
+  private readonly maxNote = 51;
+
+  private rootRanges: RootRange[] = [
+    {
+      id: '1',
+      name: 'Octaves 3 & 4',
+      range: [this.minNote, this.maxNote],
+      isCustom: false,
+    },
+    {
+      id: '2',
+      name: 'Octave 3',
+      range: [this.minNote, this.c4Note - 1],
+      isCustom: false,
+    },
+    {
+      id: '3',
+      name: 'Octave 4',
+      range: [this.c4Note, this.maxNote],
+      isCustom: false,
+    },
+    {
+      id: '4',
+      name: 'Custom',
+      isCustom: true,
+    }
+  ];
+
   public levelId$ = new BehaviorSubject(1);
   public playbackType$ = new BehaviorSubject<PlaybackType>('simultaneous');
   public instrumentType$ = new BehaviorSubject<InstrumentType>('mixed');
-  public rootRange$ = new BehaviorSubject<RootRange>(this.getOctavesData()[0]);
+  public rootRange$ = new BehaviorSubject<RootRange>(this.rootRanges[0]);
   public customRoots$ = new BehaviorSubject<number[]>([40]);
   public levels$: Observable<Levels>;
   public currentLevel$: Observable<PlayerLevel>;
   public isPerfect$ = new BehaviorSubject(true);
 
-  private readonly minNote = 28;
-  private readonly c4Note = 40;
-  private readonly maxNote = 51;
-
   constructor(
     @Inject(CommRenderToken) comm: ICommRender,
     @Inject(NotationConverterToken) private converter: INotationConverter,
   ) {
+
     this.levels$ = comm.listen<Levels>(levelMsgs.response).pipe(shareReplay(1));
     this.currentLevel$ = combineLatest(
       [this.levelId$, this.playbackType$, this.instrumentType$, this.levels$, this.rootRange$, this.isPerfect$],
@@ -101,32 +128,8 @@ class LevelsSelector {
     return instrumentTypes;
   }
 
-  public getOctavesData(): RootRange[] {
-    return [
-      {
-        id: '1',
-        name: 'Octaves 3 & 4',
-        range: [this.minNote, this.maxNote],
-        isCustom: false,
-      },
-      {
-        id: '2',
-        name: 'Octave 3',
-        range: [this.minNote, this.c4Note - 1],
-        isCustom: false,
-      },
-      {
-        id: '3',
-        name: 'Octave 4',
-        range: [this.c4Note, this.maxNote],
-        isCustom: false,
-      },
-      {
-        id: '4',
-        name: 'Custom',
-        isCustom: true,
-      }
-    ]
+  public getRootRangesData(): RootRange[] {
+    return this.rootRanges;
   }
 
   public getAllCustomRoots(): CustomRoot[] {
