@@ -16,7 +16,9 @@ export interface Level {
 export interface RootRange {
   id: string,
   name: string;
-  range: [number, number],
+  range?: [number, number],
+  customRoots?: number[];
+  isCustom: boolean,
 }
 
 export interface PlayerLevel extends Level {
@@ -24,6 +26,11 @@ export interface PlayerLevel extends Level {
   playbackType: PlaybackType;
   rootRange: RootRange;
   isPerfect: boolean;
+}
+
+export interface CustomRoot {
+  name: string;
+  note: number;
 }
 
 export interface Levels {

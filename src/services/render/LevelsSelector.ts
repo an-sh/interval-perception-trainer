@@ -1,9 +1,10 @@
 import { levelMsgs } from '@/models/events';
-import { Levels, PlaybackType, playbackTypes, PlayerLevel, RootRange } from '@/models/Levels';
+import { CustomRoot, Levels, PlaybackType, playbackTypes, PlayerLevel, RootRange } from '@/models/Levels';
 import { InstrumentType, instrumentTypes } from '@/models/SampleTable';
 import { BehaviorSubject, combineLatest, Observable } from 'rxjs';
 import { map, shareReplay } from 'rxjs/operators';
 import { Inject, Service, Token } from 'typedi';
+import { INotationConverter, NotationConverterToken } from '../shared';
 import { CommRenderToken, ICommRender } from './CommRender';
 
 export const tunings = ['TET', 'perfect'];
@@ -18,16 +19,22 @@ class LevelsSelector {
   public playbackType$ = new BehaviorSubject<PlaybackType>('simultaneous');
   public instrumentType$ = new BehaviorSubject<InstrumentType>('mixed');
   public rootRange$ = new BehaviorSubject<RootRange>(this.getOctavesData()[0]);
+  public customRoots$ = new BehaviorSubject<number[]>([40]);
   public levels$: Observable<Levels>;
   public currentLevel$: Observable<PlayerLevel>;
   public isPerfect$ = new BehaviorSubject(true);
 
+  private readonly minNote = 28;
+  private readonly c4Note = 40;
+  private readonly maxNote = 51;
+
   constructor(
     @Inject(CommRenderToken) comm: ICommRender,
+    @Inject(NotationConverterToken) private converter: INotationConverter,
   ) {
     this.levels$ = comm.listen<Levels>(levelMsgs.response).pipe(shareReplay(1));
     this.currentLevel$ = combineLatest(
-      [this.levelId$, this.playbackType$, this.instrumentType$, this.levels$, this.rootRange$, this.isPerfect$]
+      [this.levelId$, this.playbackType$, this.instrumentType$, this.levels$, this.rootRange$, this.isPerfect$],
     ).pipe(
       map(([levelId, playbackType, instrumentType, levels, rootRange, isPerfect]) => {
         const lvl = levels.diads.find(l => l.id === levelId) || levels.diads[0];
@@ -52,6 +59,17 @@ class LevelsSelector {
 
   public selectRootRange(range: RootRange) {
     this.rootRange$.next(range);
+  }
+
+  public selectCustomRoots(customRoots: number[]) {
+    const rootRange = {
+      id: '4',
+      name: 'Custom',
+      isCustom: true,
+      customRoots,
+    }
+    this.customRoots$.next(customRoots);
+    this.rootRange$.next(rootRange);
   }
 
   public selectTunungType(type: Tuning) {
@@ -87,25 +105,41 @@ class LevelsSelector {
     return [
       {
         id: '1',
-        name: 'All notes',
-        range: [28, 52],
+        name: 'Octaves 3 & 4',
+        range: [this.minNote, this.maxNote],
+        isCustom: false,
       },
       {
         id: '2',
-        name: 'Low notes',
-        range: [28, 35],
+        name: 'Octave 3',
+        range: [this.minNote, this.c4Note - 1],
+        isCustom: false,
       },
       {
         id: '3',
-        name: 'Middle notes',
-        range: [36, 44],
+        name: 'Octave 4',
+        range: [this.c4Note, this.maxNote],
+        isCustom: false,
       },
       {
         id: '4',
-        name: 'High notes',
-        range: [45, 52],
+        name: 'Custom',
+        isCustom: true,
       }
     ]
+  }
+
+  public getCustomRootsData(): CustomRoot[] {
+    const roots: CustomRoot[] = [];
+    for (let note = this.minNote; note <= this.maxNote; note++) {
+      const name = this.converter.getNoteName(note);
+      const item = {
+        name,
+        note,
+      }
+      roots.push(item);
+    }
+    return roots;
   }
 
   public getPlaybackName(levelType: PlaybackType) {

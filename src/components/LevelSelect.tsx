@@ -1,5 +1,5 @@
 import { useObservable } from '@/lib/rx-vue';
-import { GroupType, PlaybackType } from '@/models/Levels';
+import { CustomRoot, GroupType, PlaybackType } from '@/models/Levels';
 import router, { routeNames } from '@/router';
 import { LevelsSelectorToken } from '@/services/render/LevelsSelector';
 import { map } from 'rxjs/operators';
@@ -25,6 +25,17 @@ const css = stylesheet({
   optionsItem: {
     marginRight: '20px',
   },
+  customRoots: {
+    marginBottom: '20px',
+    maxWidth: '600px',
+  },
+  rootItem: {
+    marginRight: '10px',
+    whiteSpace: 'nowrap',
+  },
+  rootBox: {
+    marginRight: '2px',
+  }
 });
 
 export const LevelSelect = defineComponent({
@@ -45,7 +56,21 @@ export const LevelSelect = defineComponent({
     const rootRanges = levelsSelector.getOctavesData();
     const selectedRootRange = useObservable(levelsSelector.rootRange$);
 
-    const tunungs = levelsSelector.getTuningTypes();
+    const customRoots = levelsSelector.getCustomRootsData();
+    const selectedRootNotes = useObservable(levelsSelector.customRoots$);
+    const rootsData = useObservable(
+      levelsSelector.customRoots$.pipe(
+        map(selectedRoots => {
+          const data = customRoots.map((itm) => {
+            const isSelected = selectedRoots.includes(itm.note);
+            return { ...itm, isSelected };
+          });
+          return data;
+        }),
+      ),
+    );
+
+    const tunings = levelsSelector.getTuningTypes();
     const isPerfect = useObservable(levelsSelector.isPerfect$);
     const selectedTuningType = computed(() => levelsSelector.getTuning(isPerfect.value));
 
@@ -64,7 +89,19 @@ export const LevelSelect = defineComponent({
     function selectRootRange(arg: any) {
       const range = rootRanges.find(itm => itm.id === arg.target.value);
       if (range) {
-        levelsSelector.selectRootRange(range);
+        if (range.isCustom && selectedRootNotes.value) {
+          levelsSelector.selectCustomRoots(selectedRootNotes.value);
+        } else {
+          levelsSelector.selectRootRange(range);
+        }
+      }
+    }
+
+    function toggleCustomRoot(item: CustomRoot) {
+      if (selectedRootNotes.value) {
+        const idx = selectedRootNotes.value.findIndex((itm) => itm === item.note);
+        const updatedRootNotes = idx >= 0 ? selectedRootNotes.value.filter((_1, i) => idx !== i) : [...selectedRootNotes.value, item.note];
+        levelsSelector.selectCustomRoots(updatedRootNotes);
       }
     }
 
@@ -118,7 +155,7 @@ export const LevelSelect = defineComponent({
           </div>
           <div class={classes('select', css.optionsItem)}>
             <select value={selectedTuningType.value} onChange={selectTuningType}>
-              {tunungs.map((itm) => {
+              {tunings.map((itm) => {
                 return (
                   <option value={itm}>{capitalize(itm)}</option>
                 );
@@ -137,6 +174,22 @@ export const LevelSelect = defineComponent({
 
         </div>
       );
+
+      let customRootsSelector = <div></div>;
+      if (selectedRootRange.value && selectedRootRange.value.isCustom && rootsData.value) {
+        customRootsSelector = (
+          <div class={classes(css.customRoots)}>
+            {rootsData.value.map((itm) => {
+              return (
+                <label class={classes(css.rootItem)}>
+                  <input class={classes(css.rootBox)} checked={itm.isSelected} onClick={() => toggleCustomRoot(itm)} type='checkbox' />
+                  {itm.name}
+                </label>
+              );
+            })}
+          </div>
+        );
+      }
 
       const playbackTypeSeletor = (
         <div class='buttons has-addons'>
@@ -157,6 +210,7 @@ export const LevelSelect = defineComponent({
             <p class={classes(css.title, 'subtitle', 'is-5')}>Select Training</p>
             {playbackTypeSeletor}
             {optionsSelectors}
+            {customRootsSelector}
             {levelsMenu}
           </div>
         );

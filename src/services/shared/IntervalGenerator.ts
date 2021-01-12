@@ -13,11 +13,25 @@ class IntervalGenerator {
     @Inject(NotationConverterToken) private notationConverter: INotationConverter,
   ) { }
 
-  getDiadInterval(avalaibleIds: number[], rootRange: RootRange, fixedRoot?: number): Interval {
-    const [min, max] = rootRange.range;
-    const root = fixedRoot ?? getRandomNumber(min, max);
-    const idx = getRandomNumber(0, avalaibleIds.length - 1);
-    const interval = avalaibleIds[idx];
+  getDiadInterval(avalaibleIntervalIds: number[], rootRange: RootRange, fixedRoot?: number): Interval {
+    let root: number;
+    if (fixedRoot != null) {
+      root = fixedRoot
+    } else if (rootRange.isCustom) {
+      const roots = rootRange.customRoots!;
+      const len = roots.length;
+      if (len) {
+        const index = getRandomNumber(0, len - 1);
+        root = roots[index];
+      } else {
+        root = 40; // fallback middle C
+      }
+    } else {
+      const [min, max] = rootRange.range!;
+      root = getRandomNumber(min, max);
+    }
+    const idx = getRandomNumber(0, avalaibleIntervalIds.length - 1);
+    const interval = avalaibleIntervalIds[idx];
     const note = root + interval;
     const notes = [note];
     const rootFreq = this.notationConverter.getFreqByNumber(root);
