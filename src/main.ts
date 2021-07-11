@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 
-import 'bulma';
+import 'bulma/css/bulma.css';
 import './main.css';
 import { createApp } from 'vue';
 import App from './App';

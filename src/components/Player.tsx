@@ -44,7 +44,7 @@ export const Player = defineComponent({
     return () => {
       let intervalSelect = <div></div>;
       if (currentInterval.value && level.value) {
-        intervalSelect = level.value.intervals.map((id) => {
+        const selectItems = level.value.intervals.map((id) => {
           const name = actions.getIntervalName(id);
           if (showResult.value) {
             let classString = 'button is-small';
@@ -72,6 +72,7 @@ export const Player = defineComponent({
             );
           }
         });
+        intervalSelect = <div>{selectItems}</div>
       }
 
       let controlls = <div></div>;
